@@ -1,12 +1,12 @@
 {
-  "name": "utilitydev-frontend",
+  "name": "my-project",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -34,6 +34,5 @@
     "overrides": {
       "hono": "4.12.25"
     }
-  },
-  "packageManager": "pnpm@10.24.0"
+  }
 }

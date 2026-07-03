@@ -1,12 +1,16 @@
 FROM node:22-alpine
 
+ENV NEXT_TELEMETRY_DISABLED=1
+
 WORKDIR /app
 
-COPY package*.json .
-RUN npm install
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-EXPOSE 5173
+EXPOSE 3000
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
