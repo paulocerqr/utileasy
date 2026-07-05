@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import { ArrowRight, AlertTriangle } from "lucide-react"
+import Link from "next/link"
 
 interface ToolCardProps {
   icon: LucideIcon
@@ -36,13 +37,13 @@ export function ToolCard({
         </div>
       )}
 
-      <a
+      <Link
         href={href}
         className="mt-4 flex items-center gap-1 text-sm font-medium text-[#888888] transition-colors hover:text-white"
       >
         Acessar
         <ArrowRight className="h-3.5 w-3.5" />
-      </a>
+      </Link>
     </div>
   )
 }
@@ -88,13 +89,13 @@ export function ToolCardWide({
         </div>
       )}
 
-      <a
+      <Link
         href={href}
         className="mt-5 flex items-center gap-1 text-sm font-medium text-[#888888] transition-colors hover:text-white"
       >
         Acessar
         <ArrowRight className="h-3.5 w-3.5" />
-      </a>
+      </Link>
     </div>
   )
 }

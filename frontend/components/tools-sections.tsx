@@ -59,6 +59,7 @@ export function MediaSection() {
           icon={Mic}
           title="Transcrição de áudio e vídeo"
           description="Envie arquivos e gere transcrições automáticas com boa precisão."
+          href="/transcrisao"
         />
       </div>
     </section>
