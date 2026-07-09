@@ -19,7 +19,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-brand: var(--brand);
   --color-brand-light: var(--brand-light);
-  --font-sans: 'Inter', 'Inter Fallback', sans-serif;
+  --font-sans: var(--font-geist-mono), 'Geist Mono', monospace;
   --radius-lg: var(--radius);
 }
 
@@ -33,11 +33,11 @@
   --secondary: #242424;
   --secondary-foreground: #eaeaea;
   --muted: #2a2a2a;
-  --muted-foreground: #888888;
+  --muted-foreground: #f99b73;
   --border: #383838;
   --accent: #333333;
   --accent-foreground: #fafafa;
-  --brand: #79b8ff;
+  --brand: #767673;
   --brand-light: #9db1c5;
   --radius: 0.75rem;
 }
@@ -50,6 +50,7 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+    font-family: var(--font-geist-mono), 'Geist Mono', monospace;
   }
 }
 
@@ -61,8 +62,8 @@
     pointer-events: none;
     background-image:
       radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.12), transparent 34rem),
-      linear-gradient(180deg, rgba(31, 31, 31, 0.26) 0%, rgba(31, 31, 31, 0.56) 48%, rgba(31, 31, 31, 0.86) 100%),
-      linear-gradient(90deg, rgba(31, 31, 31, 0.58) 0%, rgba(31, 31, 31, 0.22) 48%, rgba(31, 31, 31, 0.58) 100%),
+      linear-gradient(180deg, rgba(31, 31, 31, 0.26) 0%, rgba(31, 31, 31, 0.56) 48%, rgba(31, 31, 31, 0.66) 100%),
+      linear-gradient(90deg, rgba(31, 31, 31, 0.58) 0%, rgba(31, 31, 31, 0.22) 48%, rgba(31, 31, 31, 0.48) 100%),
       url('/fundo.png');
     background-position: center top;
     background-repeat: no-repeat;
@@ -74,8 +75,8 @@
       background-position: center top;
       background-image:
         radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.1), transparent 22rem),
-        linear-gradient(180deg, rgba(31, 31, 31, 0.38) 0%, rgba(31, 31, 31, 0.68) 42%, rgba(31, 31, 31, 0.9) 100%),
-        linear-gradient(90deg, rgba(31, 31, 31, 0.56) 0%, rgba(31, 31, 31, 0.34) 50%, rgba(31, 31, 31, 0.56) 100%),
+        linear-gradient(180deg, rgba(31, 31, 31, 0.38) 0%, rgba(31, 31, 31, 0.68) 42%, rgba(31, 31, 31, 0.7) 100%),
+        linear-gradient(90deg, rgba(31, 31, 31, 0.56) 0%, rgba(31, 31, 31, 0.34) 50%, rgba(31, 31, 31, 0.46) 100%),
         url('/fundo.png');
     }
   }

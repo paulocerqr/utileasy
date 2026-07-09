@@ -1,8 +1,14 @@
 import type { Metadata, Viewport } from 'next'
+import { Geist_Mono } from 'next/font/google'
 import './globals.css'
 
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+})
+
 export const metadata: Metadata = {
-  title: 'Utility Dev - Utilidades do dia a dia em um so lugar',
+  title: 'Utileazy - Utilidades do dia a dia em um so lugar',
   description:
     'Uma colecao de ferramentas para arquivos, midia e produtividade, alem de utilitarios feitos especialmente para desenvolvedores.',
 }
@@ -18,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="bg-background">
-      <body>{children}</body>
+      <body className={geistMono.className}>{children}</body>
     </html>
   )
 }

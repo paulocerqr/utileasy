@@ -9,7 +9,7 @@ export function Navbar() {
           <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-secondary">
             <LayoutList className="h-4 w-4 text-brand" />
           </div>
-          <span className="font-semibold text-foreground">Utility Dev</span>
+          <span className="font-semibold text-foreground">Utileazy</span>
         </div>
 
         {/* Nav Links */}

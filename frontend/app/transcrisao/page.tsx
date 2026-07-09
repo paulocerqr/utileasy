@@ -3,7 +3,7 @@ import { UploadArea } from "@/components/transcricao/upload-area"
 import { History, BookOpen, Zap, ShieldCheck, Users } from "lucide-react"
 
 export const metadata = {
-  title: "Transcrição de Áudio e Vídeo — Utility Dev",
+  title: "Transcrição de Áudio e Vídeo — Utileazy",
   description:
     "Envie arquivos de áudio ou vídeo e gere transcrições automáticas com boa precisão.",
 }
