@@ -44,8 +44,8 @@ export function MediaSection() {
       <SectionHeader
         icon={FileText}
         title="Mídia & Vídeo"
-        iconColor="text-[#aaaaaa]"
-        iconBg="bg-[#1a1a1a]"
+        iconColor="text-brand-light"
+        iconBg="bg-secondary"
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <ToolCardWide
@@ -72,8 +72,8 @@ export function ProductivitySection() {
       <SectionHeader
         icon={FileText}
         title="Produtividade"
-        iconColor="text-[#aaaaaa]"
-        iconBg="bg-[#1a1a1a]"
+        iconColor="text-brand-light"
+        iconBg="bg-secondary"
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <ToolCard

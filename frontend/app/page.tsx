@@ -1,4 +1,3 @@
-import { ConstellationCanvas } from "@/components/constellation-canvas"
 import { Navbar } from "@/components/navbar"
 import { Hero } from "@/components/hero"
 import {
@@ -11,11 +10,9 @@ import { BackendStatus } from "@/components/backend-status"
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen bg-[#08090f]">
-      {/* Animated constellation background */}
-      <ConstellationCanvas />
+    <main className="relative min-h-screen overflow-hidden bg-background">
+      <div aria-hidden="true" className="home-image-background" />
 
-      {/* Content layer */}
       <div className="relative z-10">
         <Navbar />
         <Hero />
@@ -25,7 +22,6 @@ export default function HomePage() {
         <ProductivitySection />
         <DevSection />
 
-        {/* Bottom spacing */}
         <div className="h-20" />
       </div>
     </main>

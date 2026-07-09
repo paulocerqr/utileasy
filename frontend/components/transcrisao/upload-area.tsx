@@ -41,7 +41,7 @@ export function UploadArea() {
       onDragLeave={onDragLeave}
       className={`
         relative flex w-full flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dashed px-8 py-16 text-center transition-colors
-        ${dragging ? "border-white/40 bg-white/5" : "border-white/10 bg-[#111111]"}
+        ${dragging ? "border-brand bg-brand/10" : "border-border bg-card"}
       `}
     >
       <input
@@ -54,41 +54,41 @@ export function UploadArea() {
 
       {file ? (
         <div className="flex flex-col items-center gap-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1a1a1a]">
-            <File className="h-8 w-8 text-white" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-secondary">
+            <File className="h-8 w-8 text-brand" />
           </div>
-          <p className="text-sm font-medium text-white">{file.name}</p>
-          <p className="text-xs text-[#888888]">
+          <p className="text-sm font-medium text-foreground">{file.name}</p>
+          <p className="text-xs text-muted-foreground">
             {(file.size / 1024 / 1024).toFixed(2)} MB
           </p>
           <button
             onClick={() => setFile(null)}
-            className="mt-1 text-xs text-[#888888] underline underline-offset-2 transition-colors hover:text-white"
+            className="mt-1 text-xs text-brand-light underline underline-offset-2 transition-colors hover:text-foreground"
           >
             Remover arquivo
           </button>
         </div>
       ) : (
         <>
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#1a1a1a]">
-            <CloudUpload className="h-10 w-10 text-white" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border bg-secondary">
+            <CloudUpload className="h-10 w-10 text-brand" />
           </div>
 
           <div className="flex flex-col gap-1">
-            <p className="text-base font-semibold text-white">
+            <p className="text-base font-semibold text-foreground">
               Arraste seu arquivo aqui
             </p>
-            <p className="text-sm text-[#888888]">
-              <span className="font-medium text-[#aaaaaa]">Vídeos:</span> MP4, AVI, MOV, MKV, WebM
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-brand-light">Vídeos:</span> MP4, AVI, MOV, MKV, WebM
             </p>
-            <p className="text-sm text-[#888888]">
-              <span className="font-medium text-[#aaaaaa]">Áudios:</span> MP3, WAV, M4A, AAC, OGG, FLAC
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-brand-light">Áudios:</span> MP3, WAV, M4A, AAC, OGG, FLAC
             </p>
           </div>
 
           <button
             onClick={() => inputRef.current?.click()}
-            className="flex items-center gap-2 rounded-lg border border-white/15 bg-[#1a1a1a] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#222222]"
+            className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             <File className="h-4 w-4" />
             Selecionar Arquivo

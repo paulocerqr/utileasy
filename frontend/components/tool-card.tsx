@@ -18,20 +18,20 @@ export function ToolCard({
   href = "#",
 }: ToolCardProps) {
   return (
-    <div className="group flex flex-col rounded-xl border border-white/8 bg-[#0f1117] p-5 transition-colors hover:border-white/15 hover:bg-[#12151f]">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-white/8 bg-[#1a1a1a]">
-        <Icon className="h-5 w-5 text-[#888888]" />
+    <div className="group flex flex-col rounded-xl border border-border bg-card/90 p-5 transition-colors hover:border-[#444444] hover:bg-secondary">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary">
+        <Icon className="h-5 w-5 text-brand-light" />
       </div>
 
-      <h3 className="text-sm font-semibold text-white">{title}</h3>
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       <p className="mt-1 flex-1 text-sm leading-relaxed text-muted-foreground">
         {description}
       </p>
 
       {warning && (
-        <div className="mt-3 flex items-start gap-2 rounded-md border border-yellow-500/20 bg-yellow-500/5 px-3 py-2">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-yellow-400" />
-          <span className="text-xs leading-relaxed text-yellow-300/80">
+        <div className="mt-3 flex items-start gap-2 rounded-md border border-[#ffab70]/30 bg-[#ffab70]/10 px-3 py-2">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#ffab70]" />
+          <span className="text-xs leading-relaxed text-[#ffcfad]">
             {warning}
           </span>
         </div>
@@ -39,7 +39,7 @@ export function ToolCard({
 
       <Link
         href={href}
-        className="mt-4 flex items-center gap-1 text-sm font-medium text-[#888888] transition-colors hover:text-white"
+        className="mt-4 flex items-center gap-1 text-sm font-medium text-brand-light transition-colors hover:text-foreground"
       >
         Acessar
         <ArrowRight className="h-3.5 w-3.5" />
@@ -66,32 +66,32 @@ export function ToolCardWide({
   href = "#",
 }: ToolCardWideProps) {
   return (
-    <div className="group relative flex flex-col rounded-xl border border-white/8 bg-[#0f1117] p-6 transition-colors hover:border-white/15 hover:bg-[#12151f]">
+    <div className="group relative flex flex-col rounded-xl border border-border bg-card/90 p-6 transition-colors hover:border-[#444444] hover:bg-secondary">
       {badge && (
-        <span className="absolute right-5 top-5 flex items-center gap-1.5 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-xs font-medium text-yellow-300">
+        <span className="absolute right-5 top-5 flex items-center gap-1.5 rounded-full border border-[#ffab70]/30 bg-[#ffab70]/10 px-2.5 py-1 text-xs font-medium text-[#ffcfad]">
           <AlertTriangle className="h-3 w-3" />
           {badge}
         </span>
       )}
 
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-white/8 bg-[#1a1a1a]">
-        <Icon className="h-5 w-5 text-[#888888]" />
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary">
+        <Icon className="h-5 w-5 text-brand-light" />
       </div>
 
-      <h3 className="text-base font-semibold text-white">{title}</h3>
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
       <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
         {description}
       </p>
 
       {warning && (
-        <div className="mt-4 rounded-md border border-yellow-500/20 bg-yellow-500/5 px-3 py-2">
-          <p className="text-xs leading-relaxed text-yellow-300/80">{warning}</p>
+        <div className="mt-4 rounded-md border border-[#ffab70]/30 bg-[#ffab70]/10 px-3 py-2">
+          <p className="text-xs leading-relaxed text-[#ffcfad]">{warning}</p>
         </div>
       )}
 
       <Link
         href={href}
-        className="mt-5 flex items-center gap-1 text-sm font-medium text-[#888888] transition-colors hover:text-white"
+        className="mt-5 flex items-center gap-1 text-sm font-medium text-brand-light transition-colors hover:text-foreground"
       >
         Acessar
         <ArrowRight className="h-3.5 w-3.5" />
