@@ -64,7 +64,7 @@
       radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.12), transparent 34rem),
       linear-gradient(180deg, rgba(31, 31, 31, 0.26) 0%, rgba(31, 31, 31, 0.56) 48%, rgba(31, 31, 31, 0.66) 100%),
       linear-gradient(90deg, rgba(31, 31, 31, 0.58) 0%, rgba(31, 31, 31, 0.22) 48%, rgba(31, 31, 31, 0.48) 100%),
-      url('/fundo.png');
+      url('/fundo3.png');
     background-position: center top;
     background-repeat: no-repeat;
     background-size: cover;
@@ -77,7 +77,7 @@
         radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.1), transparent 22rem),
         linear-gradient(180deg, rgba(31, 31, 31, 0.38) 0%, rgba(31, 31, 31, 0.68) 42%, rgba(31, 31, 31, 0.7) 100%),
         linear-gradient(90deg, rgba(31, 31, 31, 0.56) 0%, rgba(31, 31, 31, 0.34) 50%, rgba(31, 31, 31, 0.46) 100%),
-        url('/fundo.png');
+        url('/fundo3.png');
     }
   }
 }
