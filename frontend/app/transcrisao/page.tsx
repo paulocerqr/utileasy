@@ -32,7 +32,7 @@ export default function TranscricaoPage() {
           <h1 className="text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             Transcrição de Áudio e Vídeo
           </h1>
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <p className="flex max-w-2xl items-center justify-center gap-1.5 rounded-2xl border border-border bg-card/90 px-4 py-2 text-sm font-medium text-foreground shadow-lg shadow-black/10 backdrop-blur-sm">
             <Zap className="h-4 w-4" />
             Envie arquivos e gere transcrições automáticas com boa precisão
           </p>

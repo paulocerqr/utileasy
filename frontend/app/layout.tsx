@@ -7,6 +7,16 @@ const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
 })
 
+const themeScript = `
+  try {
+    const storedTheme = localStorage.getItem('theme')
+    const preferredTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+    document.documentElement.dataset.theme = storedTheme || preferredTheme
+  } catch {
+    document.documentElement.dataset.theme = 'dark'
+  }
+`
+
 export const metadata: Metadata = {
   title: 'Utileazy - Utilidades do dia a dia em um so lugar',
   description:
@@ -23,8 +33,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className="bg-background">
-      <body className={geistMono.className}>{children}</body>
+    <html lang="pt-BR" className="bg-background" suppressHydrationWarning>
+      <body className={geistMono.className}>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {children}
+      </body>
     </html>
   )
 }
