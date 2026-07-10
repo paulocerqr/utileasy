@@ -18,7 +18,7 @@ export function ToolCard({
   href = "#",
 }: ToolCardProps) {
   return (
-    <div className="group flex flex-col rounded-xl border border-border bg-card/90 p-5 transition-colors hover:border-[#444444] hover:bg-secondary">
+    <div className="group flex flex-col rounded-xl border border-border bg-card/90 p-5 transition-colors hover:border-brand hover:bg-secondary">
       <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary">
         <Icon className="h-5 w-5 text-brand-light" />
       </div>
@@ -29,9 +29,9 @@ export function ToolCard({
       </p>
 
       {warning && (
-        <div className="mt-3 flex items-start gap-2 rounded-md border border-[#ffab70]/30 bg-[#ffab70]/10 px-3 py-2">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#ffab70]" />
-          <span className="text-xs leading-relaxed text-[#ffcfad]">
+        <div className="mt-3 flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+          <span className="text-xs leading-relaxed text-warning-foreground">
             {warning}
           </span>
         </div>
@@ -66,9 +66,9 @@ export function ToolCardWide({
   href = "#",
 }: ToolCardWideProps) {
   return (
-    <div className="group relative flex flex-col rounded-xl border border-border bg-card/90 p-6 transition-colors hover:border-[#444444] hover:bg-secondary">
+    <div className="group relative flex flex-col rounded-xl border border-border bg-card/90 p-6 transition-colors hover:border-brand hover:bg-secondary">
       {badge && (
-        <span className="absolute right-5 top-5 flex items-center gap-1.5 rounded-full border border-[#ffab70]/30 bg-[#ffab70]/10 px-2.5 py-1 text-xs font-medium text-[#ffcfad]">
+        <span className="absolute right-5 top-5 flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs font-medium text-warning-foreground">
           <AlertTriangle className="h-3 w-3" />
           {badge}
         </span>
@@ -84,8 +84,8 @@ export function ToolCardWide({
       </p>
 
       {warning && (
-        <div className="mt-4 rounded-md border border-[#ffab70]/30 bg-[#ffab70]/10 px-3 py-2">
-          <p className="text-xs leading-relaxed text-[#ffcfad]">{warning}</p>
+        <div className="mt-4 rounded-md border border-warning/30 bg-warning/10 px-3 py-2">
+          <p className="text-xs leading-relaxed text-warning-foreground">{warning}</p>
         </div>
       )}
 

@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is([data-theme='dark'] *));
 
 @theme inline {
   --color-background: var(--background);
@@ -19,6 +19,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-brand: var(--brand);
   --color-brand-light: var(--brand-light);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --font-sans: var(--font-geist-mono), 'Geist Mono', monospace;
   --radius-lg: var(--radius);
 }
@@ -39,7 +41,29 @@
   --accent-foreground: #fafafa;
   --brand: #767673;
   --brand-light: #9db1c5;
+  --warning: #ffab70;
+  --warning-foreground: #ffcfad;
   --radius: 0.75rem;
+}
+
+html[data-theme='light'] {
+  --background: #f6efe4;
+  --foreground: #1f1d1a;
+  --card: #fff7ea;
+  --card-foreground: #1f1d1a;
+  --primary: #1f1d1a;
+  --primary-foreground: #fff7ea;
+  --secondary: #eadcc7;
+  --secondary-foreground: #2e2922;
+  --muted: #eadcc7;
+  --muted-foreground: #5c5144;
+  --border: #d0bea4;
+  --accent: #dfc8a7;
+  --accent-foreground: #1f1d1a;
+  --brand: #7b4c22;
+  --brand-light: #5a6f78;
+  --warning: #9a4b16;
+  --warning-foreground: #71330f;
 }
 
 @layer base {
@@ -64,7 +88,7 @@
       radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.12), transparent 34rem),
       linear-gradient(180deg, rgba(31, 31, 31, 0.26) 0%, rgba(31, 31, 31, 0.56) 48%, rgba(31, 31, 31, 0.56) 100%),
       linear-gradient(90deg, rgba(31, 31, 31, 0.58) 0%, rgba(31, 31, 31, 0.22) 48%, rgba(31, 31, 31, 0.38) 100%),
-      url('/fundo3.png');
+      url('/fundo7.png');
     background-position: center top;
     background-repeat: no-repeat;
     background-size: cover;
@@ -77,13 +101,32 @@
     pointer-events: none;
     background-image:
       radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.12), transparent 34rem),
-      linear-gradient(180deg, rgba(31, 31, 31, 0.26) 0%, rgba(31, 31, 31, 0.56) 48%, rgba(31, 31, 31, 0.56) 100%),
-      linear-gradient(90deg, rgba(31, 31, 31, 0.58) 0%, rgba(31, 31, 31, 0.22) 48%, rgba(31, 31, 31, 0.38) 100%),
-      url('/fundo4.png');
+      linear-gradient(180deg, rgba(31, 31, 31, 0.16) 0%, rgba(31, 31, 31, 0.36) 48%, rgba(31, 31, 31, 0.36) 100%),
+      linear-gradient(90deg, rgba(31, 31, 31, 0.48) 0%, rgba(31, 31, 31, 0.15) 48%, rgba(31, 31, 31, 0.28) 100%),
+      url('/fundo6.png');
     background-position: center top;
     background-repeat: no-repeat;
     background-size: cover;
   }
+
+
+
+  html[data-theme='light'] .home-image-background {
+    background-image:
+      radial-gradient(circle at 24% 14%, rgba(255, 247, 234, 0.22), transparent 30rem),
+      linear-gradient(180deg, rgba(246, 239, 228, 0.16) 0%, rgba(246, 239, 228, 0.38) 48%, rgba(246, 239, 228, 0.48) 100%),
+      linear-gradient(90deg, rgba(246, 239, 228, 0.58) 0%, rgba(246, 239, 228, 0.16) 48%, rgba(246, 239, 228, 0.24) 100%),
+      url('/fundo8.png');
+  }
+
+  html[data-theme='light'] .transcricao-image-background {
+    background-image:
+      radial-gradient(circle at 84% 16%, rgba(255, 247, 234, 0.24), transparent 28rem),
+      linear-gradient(180deg, rgba(246, 239, 228, 0.1) 0%, rgba(246, 239, 228, 0.18) 48%, rgba(246, 239, 228, 0.38) 100%),
+      linear-gradient(90deg, rgba(246, 239, 228, 0.3) 0%, rgba(246, 239, 228, 0.05) 48%, rgba(246, 239, 228, 0.26) 100%),
+      url('/fundo9.png');
+  }
+
 
   @media (max-width: 768px) {
     .home-image-background {
@@ -92,16 +135,33 @@
         radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.1), transparent 22rem),
         linear-gradient(180deg, rgba(31, 31, 31, 0.38) 0%, rgba(31, 31, 31, 0.68) 42%, rgba(31, 31, 31, 0.6) 100%),
         linear-gradient(90deg, rgba(31, 31, 31, 0.56) 0%, rgba(31, 31, 31, 0.34) 50%, rgba(31, 31, 31, 0.36) 100%),
-        url('/fundo3.png');
+        url('/fundo7.png');
     }
 
     .transcricao-image-background {
       background-position: center top;
       background-image:
         radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.1), transparent 22rem),
-        linear-gradient(180deg, rgba(31, 31, 31, 0.38) 0%, rgba(31, 31, 31, 0.68) 42%, rgba(31, 31, 31, 0.6) 100%),
-        linear-gradient(90deg, rgba(31, 31, 31, 0.56) 0%, rgba(31, 31, 31, 0.34) 50%, rgba(31, 31, 31, 0.36) 100%),
-        url('/fundo4.png');
+        linear-gradient(180deg, rgba(31, 31, 31, 0.28) 0%, rgba(31, 31, 31, 0.48) 42%, rgba(31, 31, 31, 0.5) 100%),
+        linear-gradient(90deg, rgba(31, 31, 31, 0.46) 0%, rgba(31, 31, 31, 0.24) 50%, rgba(31, 31, 31, 0.26) 100%),
+        url('/fundo6.png');
     }
+
+    html[data-theme='light'] .home-image-background {
+      background-image:
+        radial-gradient(circle at 42% 8%, rgba(255, 247, 234, 0.2), transparent 20rem),
+        linear-gradient(180deg, rgba(246, 239, 228, 0.24) 0%, rgba(246, 239, 228, 0.5) 42%, rgba(246, 239, 228, 0.52) 100%),
+        linear-gradient(90deg, rgba(246, 239, 228, 0.48) 0%, rgba(246, 239, 228, 0.22) 50%, rgba(246, 239, 228, 0.32) 100%),
+        url('/fundo8.png');
+    }
+
+    html[data-theme='light'] .transcricao-image-background {
+      background-image:
+        radial-gradient(circle at 78% 12%, rgba(255, 247, 234, 0.18), transparent 20rem),
+        linear-gradient(180deg, rgba(246, 245, 243, 0.16) 0%, rgba(246, 239, 228, 0.28) 42%, rgba(246, 239, 228, 0.48) 100%),
+        linear-gradient(90deg, rgba(245, 244, 241, 0.2) 0%, rgba(246, 239, 228, 0.6) 50%, rgba(246, 239, 228, 0.24) 100%),
+        url('/fundo9.png');
+    }
+
   }
 }

@@ -48,5 +48,11 @@ services:
       - backend
     command: pnpm start --hostname 0.0.0.0
 
+  frontend-check:
+    build:
+      context: ./frontend
+      target: checker
+    command: pnpm lint
+
 volumes:
   postgres_data:
