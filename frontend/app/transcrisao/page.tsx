@@ -10,10 +10,11 @@ export const metadata = {
 
 export default function TranscricaoPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+      <div aria-hidden="true" className="transcricao-image-background" />
       <Navbar />
 
-      <main className="flex flex-1 flex-col items-center px-4 pb-20 pt-12">
+      <main className="relative z-10 flex flex-1 flex-col items-center px-4 pb-20 pt-12">
         {/* Top action buttons */}
         <div className="mb-10 flex w-full max-w-3xl justify-end gap-3">
           <button className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">

@@ -10,7 +10,7 @@ export function UploadArea() {
   const [file, setFile] = useState<File | null>(null)
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-2xl shadow-black/20 md:p-8">
+    <section className="rounded-2xl border border-border/80 bg-card/70 p-6 shadow-2xl shadow-black/30 backdrop-blur-md md:p-8">
       <input
         ref={inputRef}
         className="sr-only"
@@ -22,9 +22,9 @@ export function UploadArea() {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="flex min-h-64 w-full flex-col items-center justify-center rounded-xl border border-dashed border-[#444444] bg-secondary/60 px-6 text-center transition-colors hover:border-brand hover:bg-accent"
+        className="flex min-h-64 w-full flex-col items-center justify-center rounded-xl border border-dashed border-[#444444]/80 bg-secondary/15 px-6 text-center transition-colors hover:border-brand hover:bg-accent/70"
       >
-        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-secondary">
+        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-border/80 bg-secondary/10">
           {file ? (
             <FileAudio className="h-7 w-7 text-brand" />
           ) : (
