@@ -66,7 +66,7 @@ export function ConstellationCanvas() {
             ctx.beginPath()
             ctx.moveTo(stars[i].x, stars[i].y)
             ctx.lineTo(stars[j].x, stars[j].y)
-            ctx.strokeStyle = `rgba(200, 200, 200, ${alpha})`
+            ctx.strokeStyle = `rgba(121, 184, 255, ${alpha})`
             ctx.lineWidth = 0.6
             ctx.stroke()
           }
@@ -77,7 +77,7 @@ export function ConstellationCanvas() {
       for (const star of stars) {
         ctx.beginPath()
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(220, 220, 220, ${star.opacity})`
+        ctx.fillStyle = `rgba(157, 177, 197, ${star.opacity})`
         ctx.fill()
       }
 

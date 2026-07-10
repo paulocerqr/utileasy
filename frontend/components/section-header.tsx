@@ -10,13 +10,13 @@ interface SectionHeaderProps {
 export function SectionHeader({
   icon: Icon,
   title,
-  iconColor = "text-[#aaaaaa]",
-  iconBg = "bg-[#1a1a1a]",
+  iconColor = "text-brand-light",
+  iconBg = "bg-secondary",
 }: SectionHeaderProps) {
   return (
     <div className="mb-6 flex items-center gap-3">
       <div
-        className={`flex h-8 w-8 items-center justify-center rounded-md ${iconBg}`}
+        className={`flex h-8 w-8 items-center justify-center rounded-md border border-border ${iconBg}`}
       >
         <Icon className={`h-4 w-4 ${iconColor}`} />
       </div>

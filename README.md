@@ -1,55 +1,89 @@
 # UtilityDev
 
-Stack base com Django, Django REST Framework, React e PostgreSQL usando Docker Compose.
+Aplicação com Next.js, Django REST Framework e PostgreSQL, executada com Docker Compose.
 
-## Servicos
+## Arquitetura
 
-- `backend`: Django + Django REST Framework em `http://localhost:8000`
-- `frontend`: React + Vite em `http://localhost:5173`
-- `db`: PostgreSQL em `localhost:5432`
+- `frontend`: único serviço publicado no host, na porta `3000` do IP Tailscale.
+- `backend`: acessível somente pela rede interna do Docker na porta `8000`.
+- `db`: acessível somente pela rede interna do Docker na porta `5432`.
 
-## Como executar
+Não é necessário instalar Traefik ou Portainer para esta configuração.
 
-1. Crie o arquivo de ambiente:
+## Implantação no servidor
+
+Envie ou clone o projeto no servidor e acesse-o por SSH. Dentro do diretório do projeto:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Suba os containers:
+Edite `.env` e defina, no mínimo:
+
+- `TAILSCALE_IP`: IP Tailscale atual do servidor.
+- `DJANGO_SECRET_KEY`: valor longo e aleatório.
+- `POSTGRES_PASSWORD`: senha forte e exclusiva.
+- `DJANGO_ALLOWED_HOSTS`: deve conter `backend` e o IP Tailscale.
+
+Confirme o IP no servidor com:
 
 ```bash
-docker compose up --build
+tailscale ip -4
 ```
 
-3. Acesse:
+Construa e inicie a aplicação:
 
-- Frontend: `http://localhost:5173`
-- API de saude: `http://localhost:8000/api/health/`
-- Admin Django: `http://localhost:8000/admin/`
+```bash
+docker compose up -d --build
+```
 
-## Comandos uteis
+A aplicação ficará disponível em:
 
-Criar superusuario:
+```text
+http://<IP_TAILSCALE>:3000
+```
+
+O bind usa o valor de `TAILSCALE_IP`. Se a variável não for definida, a porta fica disponível apenas em `127.0.0.1`, evitando exposição acidental em todas as interfaces.
+
+## Atualização
+
+Depois de enviar ou baixar uma nova versão do código no servidor:
+
+```bash
+docker compose up -d --build
+```
+
+## Comandos úteis
+
+Ver o estado e os logs:
+
+```bash
+docker compose ps
+docker compose logs -f
+```
+
+Criar um superusuário:
 
 ```bash
 docker compose exec backend python manage.py createsuperuser
 ```
 
-Rodar migracoes manualmente:
+Executar migrações manualmente:
 
 ```bash
 docker compose exec backend python manage.py migrate
 ```
 
-Parar a stack:
+Parar a aplicação sem apagar o banco:
 
 ```bash
 docker compose down
 ```
 
-Remover volumes locais do PostgreSQL:
+Apagar também os dados persistidos do PostgreSQL:
 
 ```bash
 docker compose down -v
 ```
+
+O último comando remove permanentemente o banco da aplicação.

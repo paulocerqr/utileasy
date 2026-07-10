@@ -69,10 +69,10 @@ const devTools = [
 export function DevSection() {
   return (
     <section id="devs" className="relative z-10 mx-auto max-w-7xl px-6 py-10">
-        <div className="rounded-2xl border border-white/8 bg-[#0d0d0d] p-6 md:p-8">
+        <div className="rounded-2xl border border-border bg-[#1A1A1A]/90 p-6 md:p-8">
         <div className="mb-2 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-[#1a1a1a]">
-            <Code2 className="h-5 w-5 text-[#aaaaaa]" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary">
+            <Code2 className="h-5 w-5 text-brand-light" />
           </div>
           <h2 className="text-xl font-bold text-foreground">
             Para Desenvolvedores
