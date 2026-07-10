@@ -9,6 +9,11 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
+FROM dependencies AS checker
+
+COPY . .
+CMD ["pnpm", "lint"]
+
 FROM dependencies AS builder
 
 COPY . .
