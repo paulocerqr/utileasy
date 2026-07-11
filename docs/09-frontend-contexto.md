@@ -619,3 +619,73 @@ Se `TAILSCALE_IP` estiver configurado no `.env`, a porta será publicada em:
 ```text
 http://<TAILSCALE_IP>:3000
 ```
+
+## 13. Transcrição de áudio e vídeo
+
+A rota funcional é `/transcrisao` e importa `frontend/components/transcricao/upload-area.tsx`. Existe outro componente em `components/transcrisao/upload-area.tsx`, mas ele não é usado pela rota atual.
+
+### Fluxo da interface
+
+```text
+1. Usuário seleciona ou arrasta um arquivo.
+2. Frontend valida extensão e limite de 500 MB.
+3. Frontend envia FormData no campo `file`.
+4. API retorna um UUID público e status `queued`.
+5. Frontend consulta o status a cada 5 segundos.
+6. Ao concluir, renderiza o texto em um card.
+7. Usuário pode copiar o texto ou baixar o PDF.
+```
+
+Formatos aceitos:
+
+```text
+Áudio: MP3, WAV, M4A, AAC, OGG, FLAC
+Vídeo: MP4, MOV, MKV, WebM, AVI
+```
+
+O frontend não usa FFmpeg WASM, não calcula o hash do arquivo inteiro no navegador e não possui player, WebSocket, histórico ou diarização. A preparação do áudio e a deduplicação são responsabilidades do worker no backend.
+
+### Estados exibidos
+
+```text
+queued
+extracting
+checking_duplicate
+uploading_provider
+processing
+completed
+failed
+```
+
+O card final exibe o nome original, a quantidade de palavras, indicação de resultado reutilizado quando aplicável, botão de cópia e link para PDF.
+
+### API same-origin do Next
+
+Como somente o frontend é publicado no host, o navegador usa estas rotas do Next:
+
+```text
+POST /api/transcriptions
+GET  /api/transcriptions/{uuid}
+GET  /api/transcriptions/{uuid}/pdf
+```
+
+Os handlers em `frontend/app/api/transcriptions/` encaminham as requisições em streaming para `API_INTERNAL_BASE_URL`, normalmente `http://backend:8000`. O `Content-Length` do multipart é preservado para que uploads grandes cheguem corretamente ao Gunicorn.
+
+### Limitações atuais
+
+```text
+- Não existe autenticação associada ao job.
+- O polling é interrompido visualmente após 720 consultas, mas o job continua salvo no backend.
+- Histórico e Guia de Uso ainda são funcionalidades futuras.
+- O download de PDF é feito pelo endpoint do backend, não por window.print().
+```
+
+O build validado do Next inclui:
+
+```text
+/
+/transcrisao
+/api/transcriptions
+/api/transcriptions/[...path]
+/_not-found
+```
