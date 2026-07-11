@@ -5,7 +5,7 @@ from .models import Audio, Transcricao
 
 @admin.register(Audio)
 class AudioAdmin(admin.ModelAdmin):
-    list_display = ("id_audio", "filename", "formato", "tempo", "hash")
+    list_display = ("id_audio", "filename", "formato", "tempo", "tamanho_bytes", "hash")
     list_filter = ("formato",)
     search_fields = ("filename", "hash")
     readonly_fields = ("id_audio",)
@@ -15,11 +15,13 @@ class AudioAdmin(admin.ModelAdmin):
 class TranscricaoAdmin(admin.ModelAdmin):
     list_display = (
         "id_transcricao",
+        "public_id",
+        "nome_original",
+        "status",
         "audio",
-        "data_processamento",
-        "numero_interlocutores",
-        "tem_diarizacao",
+        "criado_em",
+        "finalizado_em",
     )
-    list_filter = ("tem_diarizacao", "data_processamento")
-    search_fields = ("texto_transcricao", "texto_com_interlocutores", "audio__filename")
-    readonly_fields = ("id_transcricao",)
+    list_filter = ("status", "tipo_origem", "provider", "criado_em")
+    search_fields = ("public_id", "nome_original", "texto_transcricao", "audio__hash")
+    readonly_fields = ("id_transcricao", "public_id", "criado_em", "atualizado_em")
