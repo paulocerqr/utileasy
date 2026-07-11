@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/navbar"
 import { UploadArea } from "@/components/transcricao/upload-area"
-import { History, BookOpen, Zap, ShieldCheck, Users } from "lucide-react"
+import { Zap, ShieldCheck } from "lucide-react"
 
 export const metadata = {
   title: "Transcrição de Áudio e Vídeo — Utileazy",
@@ -15,18 +15,6 @@ export default function TranscricaoPage() {
       <Navbar />
 
       <main className="relative z-10 flex flex-1 flex-col items-center px-4 pb-20 pt-12">
-        {/* Top action buttons */}
-        <div className="mb-10 flex w-full max-w-3xl justify-end gap-3">
-          <button className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-            <History className="h-4 w-4" />
-            Histórico
-          </button>
-          <button className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-            <BookOpen className="h-4 w-4" />
-            Guia de Uso
-          </button>
-        </div>
-
         {/* Hero title */}
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-foreground md:text-5xl">
@@ -48,10 +36,6 @@ export default function TranscricaoPage() {
             <ShieldCheck className="h-3.5 w-3.5" />
             Seguro
           </span>
-          <span className="flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-medium text-brand-light">
-            <Users className="h-3.5 w-3.5" />
-            Multi-speaker
-          </span>
         </div>
 
         {/* Upload area */}
@@ -61,7 +45,7 @@ export default function TranscricaoPage() {
 
         {/* Info footer */}
         <p className="mt-8 text-center text-xs text-muted-foreground">
-          Tamanho máximo por arquivo: 500 MB &mdash; Os arquivos são processados com segurança e não são armazenados.
+          Tamanho máximo: 500 MB &mdash; O arquivo é removido após o processamento; a transcrição permanece salva.
         </p>
       </main>
     </div>
