@@ -103,10 +103,30 @@ html[data-theme='light'] {
       radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.12), transparent 34rem),
       linear-gradient(180deg, rgba(31, 31, 31, 0.16) 0%, rgba(31, 31, 31, 0.36) 48%, rgba(31, 31, 31, 0.36) 100%),
       linear-gradient(90deg, rgba(31, 31, 31, 0.48) 0%, rgba(31, 31, 31, 0.15) 48%, rgba(31, 31, 31, 0.28) 100%),
-      url('/fundo6.png');
+      url('/fundo12.png');
     background-position: center top;
     background-repeat: no-repeat;
     background-size: cover;
+  }
+
+  .login-image-background {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(180deg, rgba(12, 12, 12, 0.44) 0%, rgba(12, 12, 12, 0.68) 100%),
+      linear-gradient(90deg, rgba(12, 12, 12, 0.7) 0%, rgba(12, 12, 12, 0.2) 52%, rgba(12, 12, 12, 0.55) 100%),
+      url('/fundo3.png');
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  .login-card-glass {
+    background-color: rgba(32, 32, 32, 0.62);
+    -webkit-backdrop-filter: blur(24px) saturate(125%);
+    backdrop-filter: blur(24px) saturate(125%);
   }
 
 
@@ -114,17 +134,28 @@ html[data-theme='light'] {
   html[data-theme='light'] .home-image-background {
     background-image:
       radial-gradient(circle at 24% 14%, rgba(255, 247, 234, 0.22), transparent 30rem),
-      linear-gradient(180deg, rgba(246, 239, 228, 0.16) 0%, rgba(246, 239, 228, 0.38) 48%, rgba(246, 239, 228, 0.48) 100%),
-      linear-gradient(90deg, rgba(246, 239, 228, 0.58) 0%, rgba(246, 239, 228, 0.16) 48%, rgba(246, 239, 228, 0.24) 100%),
+      linear-gradient(180deg, rgba(246, 239, 228, 0.16) 0%, rgba(246, 239, 228, 0.18) 48%, rgba(246, 239, 228, 0.38) 100%),
+      linear-gradient(90deg, rgba(246, 239, 228, 0.38) 0%, rgba(246, 239, 228, 0.16) 48%, rgba(246, 239, 228, 0.14) 100%),
       url('/fundo8.png');
   }
 
   html[data-theme='light'] .transcricao-image-background {
     background-image:
       radial-gradient(circle at 84% 16%, rgba(255, 247, 234, 0.24), transparent 28rem),
-      linear-gradient(180deg, rgba(246, 239, 228, 0.1) 0%, rgba(246, 239, 228, 0.18) 48%, rgba(246, 239, 228, 0.38) 100%),
-      linear-gradient(90deg, rgba(246, 239, 228, 0.3) 0%, rgba(246, 239, 228, 0.05) 48%, rgba(246, 239, 228, 0.26) 100%),
-      url('/fundo9.png');
+      linear-gradient(180deg, rgba(246, 239, 228, 0.2) 0%, rgba(246, 239, 228, 0.2) 48%, rgba(246, 239, 228, 0.2) 100%),
+      linear-gradient(90deg, rgba(246, 239, 228, 0.2) 0%, rgba(246, 239, 228, 0.02) 48%, rgba(246, 239, 228, 0.2) 100%),
+      url('/fundo13.png');
+  }
+
+  html[data-theme='light'] .login-image-background {
+    background-image:
+      linear-gradient(180deg, rgba(246, 239, 228, 0.16) 0%, rgba(246, 239, 228, 0.38) 48%, rgba(246, 239, 228, 0.52) 100%),
+      linear-gradient(90deg, rgba(246, 239, 228, 0.5) 0%, rgba(246, 239, 228, 0.12) 52%, rgba(246, 239, 228, 0.34) 100%),
+      url('/fundo8.png');
+  }
+
+  html[data-theme='light'] .login-card-glass {
+    background-color: rgba(255, 247, 234, 0.36);
   }
 
 
@@ -144,7 +175,15 @@ html[data-theme='light'] {
         radial-gradient(circle at 50% 0%, rgba(121, 184, 255, 0.1), transparent 22rem),
         linear-gradient(180deg, rgba(31, 31, 31, 0.28) 0%, rgba(31, 31, 31, 0.48) 42%, rgba(31, 31, 31, 0.5) 100%),
         linear-gradient(90deg, rgba(31, 31, 31, 0.46) 0%, rgba(31, 31, 31, 0.24) 50%, rgba(31, 31, 31, 0.26) 100%),
-        url('/fundo6.png');
+        url('/fundo12.png');
+    }
+
+    .login-image-background {
+      background-position: 58% top;
+      background-image:
+        linear-gradient(180deg, rgba(12, 12, 12, 0.46) 0%, rgba(12, 12, 12, 0.76) 100%),
+        linear-gradient(90deg, rgba(12, 12, 12, 0.66) 0%, rgba(12, 12, 12, 0.28) 55%, rgba(12, 12, 12, 0.62) 100%),
+        url('/fundo3.png');
     }
 
     html[data-theme='light'] .home-image-background {
@@ -160,7 +199,15 @@ html[data-theme='light'] {
         radial-gradient(circle at 78% 12%, rgba(255, 247, 234, 0.18), transparent 20rem),
         linear-gradient(180deg, rgba(246, 245, 243, 0.16) 0%, rgba(246, 239, 228, 0.28) 42%, rgba(246, 239, 228, 0.48) 100%),
         linear-gradient(90deg, rgba(245, 244, 241, 0.2) 0%, rgba(246, 239, 228, 0.6) 50%, rgba(246, 239, 228, 0.24) 100%),
-        url('/fundo9.png');
+        url('/fundo13.png');
+    }
+
+    html[data-theme='light'] .login-image-background {
+      background-position: 58% top;
+      background-image:
+        linear-gradient(180deg, rgba(246, 239, 228, 0.2) 0%, rgba(246, 239, 228, 0.48) 48%, rgba(246, 239, 228, 0.62) 100%),
+        linear-gradient(90deg, rgba(246, 239, 228, 0.46) 0%, rgba(246, 239, 228, 0.18) 55%, rgba(246, 239, 228, 0.4) 100%),
+        url('/fundo8.png');
     }
 
   }
