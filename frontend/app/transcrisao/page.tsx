@@ -1,4 +1,3 @@
-import { Navbar } from "@/components/navbar"
 import { UploadArea } from "@/components/transcricao/upload-area"
 import { Zap, ShieldCheck } from "lucide-react"
 
@@ -12,8 +11,6 @@ export default function TranscricaoPage() {
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
       <div aria-hidden="true" className="transcricao-image-background" />
-      <Navbar />
-
       <main className="relative z-10 flex flex-1 flex-col items-center px-4 pb-20 pt-12">
         {/* Hero title */}
         <div className="mb-8 flex flex-col items-center gap-3 text-center">

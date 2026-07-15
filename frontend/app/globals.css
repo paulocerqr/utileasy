@@ -129,7 +129,27 @@ html[data-theme='light'] {
     backdrop-filter: blur(24px) saturate(125%);
   }
 
+  .pdf-docx-image-background {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(180deg, rgba(31, 31, 31, 0.38), rgba(31, 31, 31, 0.84)),
+      url('/fundo7.png');
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-size: cover;
+    filter: grayscale(1);
+  }
 
+  .noir-panel {
+    border: 1px solid var(--border);
+    background-color: color-mix(in srgb, var(--card) 90%, transparent);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
 
   html[data-theme='light'] .home-image-background {
     background-image:
@@ -158,6 +178,15 @@ html[data-theme='light'] {
     background-color: rgba(255, 247, 234, 0.36);
   }
 
+  html[data-theme='light'] .pdf-docx-image-background {
+    background-image:
+      linear-gradient(180deg, rgba(246, 239, 228, 0.6), rgba(246, 239, 228, 0.88)),
+      url('/fundo8.png');
+  }
+
+  html[data-theme='light'] .noir-panel {
+    box-shadow: 0 20px 60px rgba(31, 29, 26, 0.1);
+  }
 
   @media (max-width: 768px) {
     .home-image-background {
