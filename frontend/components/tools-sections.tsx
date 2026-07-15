@@ -22,6 +22,7 @@ export function FileToolsSection() {
           icon={FileText}
           title="Conversão PDF ↔ DOCX"
           description="Converta documentos entre PDF e Word mantendo a formatação original."
+          href="/pdf-docx"
         />
         <ToolCard
           icon={FilePlus2}
@@ -68,7 +69,7 @@ export function MediaSection() {
 
 export function ProductivitySection() {
   return (
-    <section className="relative z-10 mx-auto max-w-7xl px-6 py-10">
+    <section id="produtividade" className="relative z-10 mx-auto max-w-7xl scroll-mt-24 px-6 py-10">
       <SectionHeader
         icon={FileText}
         title="Produtividade"
