@@ -17,7 +17,7 @@ export default function TranscricaoPage() {
           <h1 className="text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             Transcrição de Áudio e Vídeo
           </h1>
-          <p className="flex max-w-2xl items-center justify-center gap-1.5 rounded-2xl border border-border bg-card/90 px-4 py-2 text-sm font-medium text-foreground shadow-lg shadow-black/10 backdrop-blur-sm">
+          <p className="flex max-w-2xl items-center justify-center gap-1.5 rounded-2xl border border-border bg-card/45 px-4 py-2 text-sm font-medium text-foreground shadow-lg shadow-black/10 backdrop-blur-sm">
             <Zap className="h-4 w-4" />
             Envie arquivos e gere transcrições automáticas com boa precisão
           </p>
@@ -25,11 +25,11 @@ export default function TranscricaoPage() {
 
         {/* Feature pills */}
         <div className="mb-10 flex flex-wrap justify-center gap-3">
-          <span className="flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-medium text-brand-light">
+          <span className="flex items-center gap-1.5 rounded-full border border-border bg-card/45 px-4 py-1.5 backdrop-blur-md text-xs font-medium text-brand-light">
             <Zap className="h-3.5 w-3.5" />
             Rápido
           </span>
-          <span className="flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-medium text-brand-light">
+          <span className="flex items-center gap-1.5 rounded-full border border-border bg-card/45 px-4 py-1.5 backdrop-blur-md text-xs font-medium text-brand-light">
             <ShieldCheck className="h-3.5 w-3.5" />
             Seguro
           </span>

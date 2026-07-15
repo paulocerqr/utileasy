@@ -146,7 +146,7 @@ export function UploadArea() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border-2 border-border/90 bg-card/75 p-6 shadow-2xl shadow-black/20 backdrop-blur-sm md:p-8">
+      <section className="rounded-lg border-2 border-border/90 bg-card/40 p-6 shadow-2xl shadow-black/20 backdrop-blur-md md:p-8">
         <input
           ref={inputRef}
           className="sr-only"
@@ -238,7 +238,7 @@ export function UploadArea() {
       </section>
 
       {hasResult ? (
-        <section className="rounded-lg border border-border bg-card/85 shadow-2xl shadow-black/20 backdrop-blur-sm">
+        <section className="rounded-lg border border-border bg-card/45 shadow-2xl shadow-black/20 backdrop-blur-md">
           <div className="flex flex-col gap-4 border-b border-border bg-secondary/45 p-5 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-card">
