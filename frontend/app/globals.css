@@ -145,7 +145,7 @@ html[data-theme='light'] {
 
   .noir-panel {
     border: 1px solid var(--border);
-    background-color: color-mix(in srgb, var(--card) 90%, transparent);
+    background-color: color-mix(in srgb, var(--card) 48%, transparent);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
     -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
