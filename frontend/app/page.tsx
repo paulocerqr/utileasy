@@ -1,3 +1,4 @@
+import { FeatureCarousel } from "@/components/ui/feature-carousel"
 import { Hero } from "@/components/hero"
 import {
   FileToolsSection,
@@ -15,6 +16,7 @@ export default function HomePage() {
       <div className="relative z-10">
         <Hero />
         <BackendStatus />
+        <FeatureCarousel />
         <FileToolsSection />
         <MediaSection />
         <ProductivitySection />
