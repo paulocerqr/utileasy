@@ -88,6 +88,8 @@ const FEATURES: Feature[] = [
         "Juntar e separar PDFs",
         FilePlus2,
         "Combine vários arquivos em um só ou extraia páginas específicas.",
+        "/juntarpdf",
+        "Abrir ferramenta",
       ],
       [
         "imagens-pdf",
