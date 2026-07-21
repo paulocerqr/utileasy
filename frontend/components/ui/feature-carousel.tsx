@@ -290,7 +290,7 @@ export function FeatureCarousel() {
       </div>
 
       <div
-        className="relative flex min-h-[780px] w-full flex-col overflow-hidden rounded-[2rem] border border-border bg-card/60 shadow-2xl backdrop-blur-md lg:min-h-[600px] lg:flex-row lg:rounded-[3rem]"
+        className="relative flex min-h-[780px] w-full flex-col overflow-hidden rounded-[2rem] border border-border bg-transparent shadow-2xl lg:min-h-[600px] lg:flex-row lg:rounded-[3rem]"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onFocusCapture={() => setIsPaused(true)}
@@ -303,9 +303,9 @@ export function FeatureCarousel() {
           if (event.key === "ArrowRight") goToNext()
         }}
       >
-        <div className="relative z-30 flex min-h-[330px] w-full items-center justify-center overflow-hidden bg-brand px-6 md:min-h-[380px] md:px-12 lg:min-h-0 lg:w-[42%] lg:justify-start lg:px-14">
-          <div className="absolute inset-x-0 top-0 z-40 h-16 bg-gradient-to-b from-brand via-brand/90 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 z-40 h-16 bg-gradient-to-t from-brand via-brand/90 to-transparent" />
+        <div className="relative z-30 flex min-h-[330px] w-full items-center justify-center overflow-hidden bg-transparent px-6 backdrop-blur-xl md:min-h-[380px] md:px-12 lg:min-h-0 lg:w-[42%] lg:justify-start lg:px-14">
+          <div className="absolute inset-x-0 top-0 z-40 h-16 bg-gradient-to-b from-background/35 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 z-40 h-16 bg-gradient-to-t from-background/35 to-transparent" />
 
           <div className="relative z-20 flex h-full w-full items-center justify-center lg:justify-start">
             {FEATURES.map((feature, index) => {
@@ -347,7 +347,7 @@ export function FeatureCarousel() {
                       "group relative flex items-center gap-3 rounded-full border px-5 py-3 text-left transition-colors duration-500 md:px-7 md:py-4",
                       isActive
                         ? "z-10 border-card bg-card text-foreground shadow-lg"
-                        : "border-card/25 bg-transparent text-primary-foreground/65 hover:border-card/50 hover:text-primary-foreground",
+                        : "border-border/50 bg-transparent text-foreground/70 hover:border-foreground/40 hover:text-foreground",
                     )}
                   >
                     <Icon
@@ -356,7 +356,7 @@ export function FeatureCarousel() {
                         "h-4 w-4 shrink-0 transition-colors duration-500",
                         isActive
                           ? "text-brand-light"
-                          : "text-primary-foreground/55",
+                          : "text-foreground/60",
                       )}
                     />
                     <span className="whitespace-nowrap text-xs font-medium uppercase tracking-tight md:text-sm">
