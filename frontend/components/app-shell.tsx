@@ -14,7 +14,6 @@ import {
   LayoutGrid,
   Menu,
   PanelLeftOpen,
-  Settings,
   X,
 } from "lucide-react"
 
@@ -26,26 +25,26 @@ const domains = [
     icon: FileArchive,
     tools: [
       { label: "Conversão PDF ↔ DOCX", href: "/pdf-docx" },
-      { label: "Juntar PDFs", href: "/juntarpdf" },
-      { label: "Imagens para PDF", href: "/#ferramentas" },
+      { label: "Juntar e separar PDFs", href: "/juntarpdf" },
+      { label: "Imagens para PDF", href: "/#feature-carousel" },
     ],
   },
   {
-    label: "Mídia",
+    label: "Mídia e vídeo",
     icon: AudioLines,
     tools: [
-      { label: "Transcrição de mídia", href: "/transcrisao" },
-      { label: "Removedor de fundo", href: "/#ferramentas" },
-      { label: "Editor de imagens", href: "/#ferramentas" },
+      { label: "Baixar vídeos do YouTube", href: "/#feature-carousel" },
+      { label: "Transcrição de áudio e vídeo", href: "/transcrisao" },
     ],
   },
   {
     label: "Produtividade",
     icon: Gauge,
     tools: [
-      { label: "Bloco de notas", href: "/#produtividade" },
-      { label: "Lista de tarefas", href: "/#produtividade" },
-      { label: "Pomodoro", href: "/#produtividade" },
+      { label: "Sorteador", href: "/#feature-carousel" },
+      { label: "Ordem de apresentação", href: "/#feature-carousel" },
+      { label: "Divisor de grupos", href: "/#feature-carousel" },
+      { label: "Gerador de QR Code", href: "/#feature-carousel" },
     ],
   },
   {
@@ -53,8 +52,14 @@ const domains = [
     icon: Braces,
     tools: [
       { label: "Decodificador JWT", href: "/#devs" },
+      { label: "Teste de velocidade", href: "/#devs" },
       { label: "Dicas de Linux", href: "/#devs" },
+      { label: "Distribuições Linux", href: "/#devs" },
+      { label: "Onde baixar Linux", href: "/#devs" },
+      { label: "Comparar distros", href: "/#devs" },
       { label: "Dicas de Git", href: "/#devs" },
+      { label: "Dicas de Docker", href: "/#devs" },
+      { label: "Dicas de Banco de Dados", href: "/#devs" },
     ],
   },
 ]
@@ -69,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [expandedFolders, setExpandedFolders] = useState<string[]>(["Arquivos", "Mídia"])
+  const [expandedFolders, setExpandedFolders] = useState<string[]>(["Arquivos", "Mídia e vídeo"])
 
   function toggleFolder(label: string) {
     setExpandedFolders((current) =>
@@ -89,8 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <nav aria-label="Navegação principal" className="mx-auto hidden items-center gap-8 text-sm md:flex">
           <Link href="/" className={pathname === "/" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}>Início</Link>
-          <Link href="/#ferramentas" className="text-muted-foreground hover:text-foreground">Explorar</Link>
-          <Link href="/#produtividade" className="text-muted-foreground hover:text-foreground">Categorias</Link>
+          <a href="/#devs" className="text-muted-foreground hover:text-foreground">Desenvolvedores</a>
           <Link href="/pdf-docx#atividade" className="text-muted-foreground hover:text-foreground">Recentes</Link>
         </nav>
 
@@ -168,8 +172,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <Link href="/#ferramentas" onClick={() => setSidebarOpen(false)} className="rounded-md border border-border bg-secondary px-4 py-3 text-center text-xs font-medium hover:bg-accent">Ver todas as ferramentas</Link>
-          <Link href="/#configuracoes" onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 rounded-md px-3 py-2 text-xs text-muted-foreground hover:text-foreground"><Settings className="size-4" />Configurações</Link>
+          <Link href="/#feature-carousel" onClick={() => setSidebarOpen(false)} className="rounded-md border border-border bg-secondary px-4 py-3 text-center text-xs font-medium hover:bg-accent">Ver todas as ferramentas</Link>
         </div>
       </aside>
 

@@ -11,7 +11,7 @@ export function Hero() {
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
         <a
-          href="#ferramentas"
+          href="#feature-carousel"
           className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
         >
           Explorar ferramentas
