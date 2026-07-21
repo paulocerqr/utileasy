@@ -7,7 +7,7 @@ export async function BackendStatus() {
 
   return (
     <section className="relative z-10 mx-auto max-w-7xl px-6 py-6">
-      <div className="flex flex-col gap-4 rounded-lg border border-border bg-card/90 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-lg border border-border bg-card/45 p-5 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary">
             <Server className="h-5 w-5 text-brand-light" />

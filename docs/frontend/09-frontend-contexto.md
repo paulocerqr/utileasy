@@ -15,6 +15,8 @@ UI:
 Tailwind CSS com tokens CSS customizados em app/globals.css
 lucide-react para ícones
 class-variance-authority, clsx e tailwind-merge disponíveis
+motion para animações do carrossel da home
+pdfjs-dist para pré-visualização local da primeira página de PDFs
 
 Package manager:
 pnpm 10.24.0
@@ -86,8 +88,13 @@ O build atual do Next compila as rotas:
 
 ```text
 /
+/juntarpdf
+/login
+/pdf-docx
 /transcrisao
 /_not-found
+/api/transcriptions
+/api/transcriptions/[...path]
 ```
 
 Observação: a rota existente é `/transcrisao`, sem cedilha e com essa grafia. Não renomear sem ajustar links, documentação e navegação.
@@ -100,27 +107,42 @@ frontend/
     layout.tsx
     page.tsx
     globals.css
+    juntarpdf/
+      page.tsx
+    login/
+      page.tsx
+    pdf-docx/
+      page.tsx
     transcrisao/
       page.tsx
   components/
+    app-shell.tsx
     backend-status.tsx
     dev-section.tsx
     hero.tsx
     navbar.tsx
+    pdf-docx-converter.tsx
+    pdf-merge-workspace.tsx
     section-header.tsx
     theme-toggle.tsx
     tool-card.tsx
     tools-sections.tsx
+    ui/
+      feature-carousel.tsx
     transcricao/
       upload-area.tsx
   lib/
     api.ts
     utils.ts
+  types/
+    pdfjs-dist-webpack.d.ts
   public/
     fundo6.png
     fundo7.png
     fundo8.png
     fundo9.png
+    fundo12.png
+    fundo13.png
     demais placeholders e icones
 ```
 
@@ -131,6 +153,8 @@ Existe também `components/transcrisao/upload-area.tsx`, mas a rota atual `/tran
 Arquivo principal: `frontend/app/layout.tsx`.
 
 O layout carrega `Geist_Mono` via `next/font/google` e aplica a classe no `<body>`.
+
+Todas as rotas são envolvidas por `components/app-shell.tsx`, que fornece o cabeçalho fixo, a navegação principal, a barra lateral recolhível e os links para as ferramentas. Em mobile, a barra lateral abre como menu sobreposto.
 
 Também existe um script inline `themeScript` que roda antes da hidratação para definir:
 
@@ -250,13 +274,23 @@ Uso:
 Imagens atuais:
 
 ```text
-Dark mode: /fundo6.png
-Light mode: /fundo9.png
+Dark mode: /fundo12.png
+Light mode: /fundo13.png
 ```
 
-O modo claro de `/transcrisao` usa `fundo9.png`, imagem com cavaleiro, arvore, caminho e castelo ao fundo.
+O modo claro de `/transcrisao` usa `fundo13.png`; o modo escuro usa `fundo12.png`.
 
 Há overrides específicos dentro de `@media (max-width: 768px)` para ajustar overlays em mobile.
+
+### Ferramentas PDF
+
+As rotas `/pdf-docx` e `/juntarpdf` reutilizam a classe:
+
+```css
+.pdf-docx-image-background
+```
+
+Essa camada usa `fundo7.png` no modo escuro e `fundo8.png` no modo claro, com filtro em escala de cinza e overlays próprios.
 
 ## 7. Tela Home atual
 
@@ -277,9 +311,9 @@ Composição atual:
 ```text
 main
 - camada .home-image-background
-- Navbar
 - Hero
 - BackendStatus
+- FeatureCarousel
 - FileToolsSection
 - MediaSection
 - ProductivitySection
@@ -287,25 +321,26 @@ main
 - espaçamento final
 ```
 
-### Navbar
+O cabeçalho e a navegação lateral da home vêm do `AppShell` global. O arquivo `components/navbar.tsx` ainda existe, mas não é importado por `frontend/app/page.tsx`.
+
+### AppShell
 
 Arquivo:
 
 ```text
-components/navbar.tsx
+components/app-shell.tsx
 ```
 
 Estado atual:
 
 ```text
-- marca exibida: Utileazy
-- ícone LayoutList
-- links internos: #ferramentas e #devs
+- cabeçalho fixo com marca Utileazy
+- navegação principal para Início, Explorar, Categorias e Recentes
+- barra lateral recolhível com domínios e ferramentas
+- link de Juntar PDFs para /juntarpdf
 - botão ThemeToggle
-- botões visuais Entrar e Criar conta
+- links Entrar e Criar conta para /login
 ```
-
-Os botões Entrar e Criar conta ainda são visuais; não há autenticação implementada.
 
 ### Hero
 
@@ -364,6 +399,26 @@ Dentro do Docker Compose, `API_INTERNAL_BASE_URL` é:
 http://backend:8000
 ```
 
+### Carrossel de funcionalidades
+
+Arquivo:
+
+```text
+components/ui/feature-carousel.tsx
+```
+
+Estado atual:
+
+```text
+- Componente client-side animado com motion.
+- Exibe as 18 funcionalidades presentes nas seções da home.
+- Possui autoplay, pausa por hover/foco e controles anterior/próximo.
+- Permite selecionar funcionalidades pela lista lateral.
+- Respeita prefers-reduced-motion.
+- Usa imagens do Unsplash agrupadas por categoria.
+- Mantém links reais para /pdf-docx, /juntarpdf e /transcrisao.
+```
+
 ### Seções de ferramentas
 
 Arquivo:
@@ -375,8 +430,8 @@ components/tools-sections.tsx
 Seção `Ferramentas de Arquivos`:
 
 ```text
-- Conversão PDF ↔ DOCX
-- Juntar e separar PDFs
+- Conversão PDF ↔ DOCX -> href /pdf-docx
+- Juntar e separar PDFs -> href /juntarpdf
 - Imagens para PDF
 ```
 
@@ -439,15 +494,15 @@ Composição atual:
 ```text
 page wrapper
 - camada .transcricao-image-background
-- Navbar
 - main centralizado
-  - botões Histórico e Guia de Uso
   - título
   - subtítulo dentro de card arredondado
-  - pills Rápido, Seguro, Multi-speaker
+  - pills Rápido e Seguro
   - UploadArea
   - texto de rodapé sobre tamanho máximo e armazenamento
 ```
+
+O cabeçalho e a navegação lateral são fornecidos pelo `AppShell` global.
 
 Título:
 
@@ -465,7 +520,7 @@ Esse subtítulo foi colocado dentro de um card retangular com bordas arredondada
 
 ```text
 border border-border
-bg-card/90
+bg-card/45
 text-foreground
 shadow-lg
 backdrop-blur-sm
@@ -476,7 +531,6 @@ Pills de recurso:
 ```text
 - Rápido
 - Seguro
-- Multi-speaker
 ```
 
 ### UploadArea
@@ -490,15 +544,16 @@ components/transcricao/upload-area.tsx
 Estado atual:
 
 ```text
-- Componente client-side.
-- Usa input file escondido e botão visual.
-- Aceita audio/*, video/*, .mp3, .mp4, .wav, .m4a, .ogg.
-- Guarda o arquivo selecionado em useState.
-- Exibe nome e tamanho do arquivo selecionado.
-- Botão Iniciar transcrição fica disabled quando não há arquivo.
+- Componente client-side com seleção e drag-and-drop.
+- Aceita MP3, WAV, M4A, AAC, OGG, FLAC, MP4, MOV, MKV, WebM e AVI.
+- Valida o limite de 500 MB antes do envio.
+- Envia FormData para POST /api/transcriptions.
+- Consulta o status do job a cada 5 segundos.
+- Exibe estados de processamento, erros e o texto concluído.
+- Permite copiar a transcrição e baixar o PDF gerado pelo backend.
 ```
 
-Ainda não há envio real para o backend. A tela é visual/interativa localmente, mas o fluxo de job de transcrição ainda precisa ser conectado a endpoints reais.
+O fluxo real de upload, polling e download está implementado por rotas same-origin do Next e é detalhado na seção 13 deste documento.
 
 ## 9. Cards e padrão visual
 
@@ -513,7 +568,7 @@ Os cards usam:
 ```text
 rounded-xl
 border border-border
-bg-card/90
+bg-card/45
 hover:border-brand
 hover:bg-secondary
 ```
@@ -545,7 +600,10 @@ Implementado:
 ```text
 - Next.js em produção via Docker Compose.
 - Home visual completa com seções e cards.
-- Rota /transcrisao visual/interativa para seleção local de arquivo.
+- Carrossel animado com as 18 funcionalidades da home.
+- Rota /pdf-docx com fluxo visual de conversão.
+- Rota /juntarpdf para seleção, pré-visualização e ordenação local de PDFs.
+- Rota /transcrisao integrada ao backend para upload, polling e download.
 - Tema claro e escuro com persistência em localStorage.
 - Imagens de fundo diferentes por rota e por tema.
 - Fonte global Geist Mono.
@@ -560,10 +618,9 @@ Ainda não implementado:
 - Login/cadastro real.
 - Histórico real de transcrições.
 - Guia de uso funcional.
-- Upload real para backend.
-- Criação de TranscriptionJob via API.
-- Status de processamento.
-- Download/exportação de transcrição.
+- Mesclagem real dos PDFs selecionados em /juntarpdf.
+- Envio dos PDFs de /juntarpdf para o backend.
+- Download do PDF mesclado.
 - Rotas reais para a maioria dos cards da home.
 ```
 
@@ -571,6 +628,10 @@ Ainda não implementado:
 
 ```text
 - Preservar a rota /transcrisao enquanto ela estiver linkada na home.
+- Preservar a rota /juntarpdf, que está linkada no AppShell, nos cards e no carrossel.
+- Não implementar a mesclagem de PDFs até ser decidido se o processamento ficará no backend ou no frontend.
+- Em /juntarpdf, pdfjs-dist é usado somente para renderizar a primeira página; não confundir pré-visualização com processamento.
+- Manter o limite acumulado de 100 MB na preparação da mesclagem.
 - Usar tokens de tema em vez de hexadecimais diretos sempre que possível.
 - Verificar contraste nos dois temas, principalmente sobre imagens claras.
 - Para textos sobre imagem, preferir card/superfície com bg-card/90 e border-border.
@@ -684,8 +745,72 @@ O build validado do Next inclui:
 
 ```text
 /
+/juntarpdf
+/login
+/pdf-docx
 /transcrisao
 /api/transcriptions
 /api/transcriptions/[...path]
 /_not-found
+```
+
+## 14. Preparação para juntar PDFs
+
+A rota de preparação é:
+
+```text
+/juntarpdf
+```
+
+Arquivos principais:
+
+```text
+frontend/app/juntarpdf/page.tsx
+frontend/components/pdf-merge-workspace.tsx
+frontend/types/pdfjs-dist-webpack.d.ts
+```
+
+O protótipo de referência criado no Google Stitch fica em `JuntarPDF/`, com `DESIGN.md`, `code.html` e `screen.png`. Esses arquivos não são importados pelo frontend em runtime.
+
+### Fluxo atual da interface
+
+```text
+1. Usuário seleciona vários PDFs ou arrasta arquivos para o workspace.
+2. Frontend ignora formatos inválidos e impede que a soma ultrapasse 100 MB.
+3. PDF.js renderiza localmente a primeira página de cada arquivo em um canvas.
+4. Usuário arrasta os cards para reordenar ou usa os botões direcionais.
+5. Usuário pode remover um PDF pelo card ou pelo resumo lateral.
+6. O painel Options permite adicionar mais arquivos e configurar a confirmação antes da remoção.
+7. O resumo lateral e o contador de tamanho acompanham a ordem e o total atuais.
+```
+
+O painel de opções contém:
+
+```text
+- Adicionar mais arquivos.
+- Pedir confirmação antes de remover PDF, ativado por padrão.
+- Contador do tamanho acumulado em relação aos 100 MB.
+- Barra visual de progresso do limite.
+- Instruções de reordenação.
+- Resumo ordenado com ação de remoção.
+```
+
+### Pré-visualização
+
+A dependência `pdfjs-dist` é carregada no cliente por `pdfjs-dist/webpack.mjs`. O worker é empacotado pelo build do Next. A declaração local em `frontend/types/pdfjs-dist-webpack.d.ts` fornece os tipos para esse subpath.
+
+Os arquivos permanecem como objetos `File` na memória do navegador. A pré-visualização não envia dados para o backend e não persiste a lista após recarregar a página.
+
+### Limitação deliberada
+
+A mesclagem ainda não foi implementada. O botão `Juntar PDFs` é habilitado quando há pelo menos dois arquivos, mas apenas informa que a ordenação está pronta e que a integração depende da decisão entre backend e frontend.
+
+Não há atualmente:
+
+```text
+- Biblioteca de mesclagem de PDFs.
+- Endpoint de upload ou mesclagem para essa rota.
+- Geração de arquivo final.
+- Download do PDF mesclado.
+- Histórico de mesclagens.
 ```

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist_Mono } from 'next/font/google'
+import { AppShell } from '@/components/app-shell'
 import './globals.css'
 
 const geistMono = Geist_Mono({
@@ -36,7 +37,7 @@ export default function RootLayout({
     <html lang="pt-BR" className="bg-background" suppressHydrationWarning>
       <body className={geistMono.className}>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        {children}
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   )

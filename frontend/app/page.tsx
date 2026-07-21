@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/navbar"
+import { FeatureCarousel } from "@/components/ui/feature-carousel"
 import { Hero } from "@/components/hero"
 import {
   FileToolsSection,
@@ -14,9 +14,9 @@ export default function HomePage() {
       <div aria-hidden="true" className="home-image-background" />
 
       <div className="relative z-10">
-        <Navbar />
         <Hero />
         <BackendStatus />
+        <FeatureCarousel />
         <FileToolsSection />
         <MediaSection />
         <ProductivitySection />
