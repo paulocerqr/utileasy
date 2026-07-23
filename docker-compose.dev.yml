@@ -1,0 +1,13 @@
+services:
+  db:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  backend:
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  worker:
+    command: >-
+      celery -A config worker --loglevel=INFO --pool=prefork --concurrency=2
+      -Q media,provider,maintenance

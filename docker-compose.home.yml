@@ -1,0 +1,27 @@
+services:
+  db:
+    mem_limit: 768m
+    cpus: 0.50
+
+  redis:
+    mem_limit: 160m
+    cpus: 0.25
+
+  backend:
+    mem_limit: 768m
+    cpus: 0.75
+
+  worker:
+    mem_limit: 1536m
+    cpus: 1.00
+    command: >-
+      celery -A config worker --loglevel=INFO --pool=solo --concurrency=1
+      -Q media,provider,maintenance
+
+  beat:
+    mem_limit: 192m
+    cpus: 0.10
+
+  frontend:
+    mem_limit: 768m
+    cpus: 0.50
