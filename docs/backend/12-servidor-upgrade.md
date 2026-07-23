@@ -1,44 +1,103 @@
- Servidor atual:
-  - CPU: i5-3337U 2 nucleos e 4 threads
-  - GPU: GT 625M 1GB DE VRAM
-  - RAM: 6GB DDR3L 1600Mhz
-  - ARMAZENAMENTO: HD 1TB
- 
- 
- 
- O maior gargalo geral é o HD mecânico. Para a transcrição especificamente, o maior gargalo durante o processamento será o processador.
+# Capacidade dos ambientes
 
-  Ordem prática dos gargalos:
+## Servidor caseiro atual
 
-  1. HD mecânico
-      - Docker, PostgreSQL, Redis e Next fazem muitos acessos pequenos e aleatórios.
-      - Uploads grandes são gravados enquanto FFmpeg lê e produz outro arquivo.
-      - Builds, inicialização dos containers e migrações ficam sensivelmente lentos.
-      - Um SSD SATA, mesmo simples, seria o upgrade com maior impacto geral.
+```text
+CPU             i5-3337U, 2 núcleos/4 threads
+GPU             GT 625M, não usada pelo pipeline
+RAM             6 GB DDR3L
+armazenamento   HD mecânico de 1 TB
+```
 
-  2. CPU i5-3337U
-      - São apenas 2 núcleos/4 threads de uma arquitetura antiga e de baixo consumo.
-      - Extração e conversão com FFmpeg podem ocupar um núcleo inteiro por bastante tempo.
-      - A configuração atual de Celery com concorrência 1 é adequada.
-      - A AssemblyAI faz a transcrição pesada remotamente, então o servidor não precisa executar o modelo de IA.
+Gargalos em ordem prática:
 
-  3. RAM de 6 GB
-      - É suficiente para a configuração atual com cautela.
-      - PostgreSQL, Next.js, Django/Gunicorn, Redis e Celery juntos deixam pouca margem para cache do sistema.
-      - Uploads não devem ser carregados integralmente na memória.
-      - Se houver swap no HD, qualquer pressão de memória pode deixar o servidor extremamente lento.
+1. HD: Docker, PostgreSQL, Redis, uploads e FFmpeg fazem I/O simultâneo.
+2. CPU: FFmpeg pode ocupar um núcleo por bastante tempo.
+3. RAM/swap: 6 GB atendem o perfil limitado, mas swap no HD degrada muito.
+4. Upload da internet: o MP3 canônico ainda precisa chegar à AssemblyAI.
 
-  4. Internet de upload
-      - Pode acabar sendo o maior limitador de tempo, dependendo da sua conexão.
-      - O áudio normalizado precisa ser enviado do servidor para a AssemblyAI.
-      - Converter para MP3 mono, 16 kHz e 64 kbps reduz bastante esse impacto.
+O perfil `docker-compose.home.yml` mantém:
 
-  Em resumo:
+```text
+worker solo
+concorrência 1
+FFmpeg com um thread
+polling
+filesystem local
+limites de CPU e memória por serviço
+```
 
-  Lentidão geral do servidor: HD
-  Processamento local da transcrição: CPU
-  Risco de travamento sob carga: RAM/swap
-  Tempo de envio à AssemblyAI: internet de upload
+Um SSD SATA continua sendo o upgrade de maior impacto geral. Depois, aumentar para
+8 GB ou mais reduz pressão de memória.
 
-  O melhor upgrade seria trocar o HD por SSD. Depois, se possível, aumentar para pelo menos 8 GB de RAM. O processador não é rápido, mas o fluxo atual foi desenhado para contornar isso
-  usando apenas um FFmpeg por vez e deixando a IA na AssemblyAI.
+## Computador de desenvolvimento
+
+```text
+CPU             Ryzen 5600GT
+RAM             16 GB
+armazenamento   NVMe 512 GB
+```
+
+`docker-compose.dev.yml` usa prefork com concorrência 2 e publica PostgreSQL/backend
+somente em loopback. Isso é suficiente para testes paralelos sem consumir todos os
+recursos da estação. Webhook pode ser testado com túnel HTTPS, mas polling é o padrão.
+
+## VPS
+
+Alvo:
+
+```text
+2–4 vCPU
+8 GB RAM
+100 GB de armazenamento
+```
+
+Para 2 vCPU:
+
+```dotenv
+VPS_MEDIA_CONCURRENCY=1
+VPS_PROVIDER_CONCURRENCY=2
+```
+
+Para 4 vCPU:
+
+```dotenv
+VPS_MEDIA_CONCURRENCY=2
+VPS_PROVIDER_CONCURRENCY=2
+```
+
+O perfil VPS separa FFmpeg da fila de rede. Isso impede que o upload para a AssemblyAI
+ocupe uma vaga destinada a CPU. Webhook remove o polling frequente do provider;
+Celery Beat mantém apenas reconciliação de segurança.
+
+Filesystem é aceitável em uma VPS única. S3 compatível é recomendado quando houver
+necessidade de storage fora do host, restauração independente ou múltiplos nós.
+
+## Monitoramento antes de aumentar concorrência
+
+Medir:
+
+```text
+CPU e load average durante dois FFmpeg
+pico de RAM dos workers prefork
+espaço de uploads e canônicos
+tempo de upload à AssemblyAI
+tamanho e idade das filas Redis
+jobs processing sem atualização
+conexões PostgreSQL
+limites da conta AssemblyAI
+```
+
+Uma VPS de 4 vCPU não deve usar concorrência ilimitada. Começar com dois processos
+de mídia preserva CPU para Django, Next, PostgreSQL, Redis, Caddy e sistema operacional.
+
+## Limites de acesso não dependem do hardware
+
+Mais CPU e RAM permitem aumentar a concorrência de mídia, mas não justificam aumentar
+automaticamente cotas anônimas ou créditos. Na VPS, comece com 2/minuto e 10/24h por
+IP, 3/24h por cookie e 14.400 segundos globais por dia local. Ajuste após observar
+uso legítimo, tentativas bloqueadas e consumo real da AssemblyAI.
+
+No computador de desenvolvimento os valores 10/minuto, 100/24h e 50/24h evitam que
+testes manuais bloqueiem o desenvolvedor. Eles pertencem ao `.env` local e não ao
+perfil de produção.

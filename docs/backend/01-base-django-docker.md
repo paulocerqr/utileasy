@@ -1,252 +1,176 @@
-# Base do Backend: Django e Docker
+# Base do backend: Django e Docker
 
 ## Visão geral
 
-O backend do Utileazy é um monólito Django modular. O projeto Django fica em backend/config e seus domínios ficam em backend/apps. A infraestrutura atual é Docker Compose com PostgreSQL, Redis, Django/Gunicorn, Celery e Next.js.
+O backend é um monólito Django modular em `backend/`. PostgreSQL persiste o estado,
+Redis transporta tasks Celery e o frontend Next.js é a única entrada HTTP para o
+navegador nos perfis normais.
 
-Este documento descreve a base comum. O fluxo de transcrições está em [03-app-transcriptions.md](03-app-transcriptions.md).
+O mesmo código roda em desenvolvimento, servidor caseiro e VPS. Comportamentos como
+polling/webhook, filesystem/S3 e concorrência são selecionados pelo ambiente.
 
 ## Estrutura
 
-\`\`\`text
+```text
 backend/
 ├── manage.py
 ├── requirements.txt
 ├── Dockerfile
-├── .dockerignore
 ├── config/
-│   ├── __init__.py
-│   ├── asgi.py
 │   ├── celery.py
 │   ├── settings.py
 │   ├── urls.py
+│   ├── asgi.py
 │   └── wsgi.py
 └── apps/
     ├── common/
+    ├── accounts/
     └── transcriptions/
-\`\`\`
+```
 
-Config concentra os itens transversais; cada app concentra um domínio de negócio. Esse desenho permite adicionar ferramentas sem misturar modelos, rotas e regras de negócio.
+Responsabilidades:
 
-## Arquivos Django
+```text
+common          health check público
+accounts        CSRF, login, logout e sessão
+transcriptions  upload, jobs, filas, provider, webhook e PDF
+```
 
-### manage.py
+## Settings
 
-É a entrada dos comandos administrativos. Define config.settings e entrega o comando ao Django.
+### Segurança
 
-\`\`\`bash
-python manage.py migrate
-python manage.py check
-python manage.py createsuperuser
-python manage.py test
-\`\`\`
+```text
+DJANGO_SECRET_KEY
+DJANGO_DEBUG
+DJANGO_ALLOWED_HOSTS
+DJANGO_CORS_ALLOWED_ORIGINS
+DJANGO_CSRF_TRUSTED_ORIGINS
+DJANGO_SECURE_COOKIES
+```
 
-No Compose:
+O DRF usa `SessionAuthentication` e `IsAuthenticated` por padrão. Sessão, CSRF e
+cookies usam recursos nativos do Django. Em HTTPS, `DJANGO_SECURE_COOKIES=1` ativa
+`Secure` para cookies de sessão e CSRF. O proxy informa o protocolo original por
+`X-Forwarded-Proto`.
 
-\`\`\`bash
-docker compose exec backend python manage.py check
-\`\`\`
+### Banco
 
-### config/settings.py
-
-É a configuração central.
-
-**Segurança e hosts.** BASE_DIR é a raiz do backend, equivalente a /app na imagem. DJANGO_SECRET_KEY e DJANGO_DEBUG vêm do ambiente. A chave padrão só serve para desenvolvimento; em servidor, a chave deve ser longa, única e secreta. DEBUG só é ligado quando DJANGO_DEBUG=1. DJANGO_ALLOWED_HOSTS é uma lista separada por vírgulas e deve conter backend para a comunicação entre contêineres.
-
-**Apps instalados.**
-
-\`\`\`text
-django.contrib.*       administração, autenticação, sessões e estáticos
-corsheaders            CORS
-rest_framework         API REST
-apps.common            recursos compartilhados
-apps.transcriptions    domínio de transcrições
-\`\`\`
-
-**Middlewares.** CorsMiddleware vem antes para tratar CORS cedo. SecurityMiddleware aplica proteções gerais. WhiteNoiseMiddleware entrega estáticos. Os demais cuidam de sessão, CSRF, autenticação, mensagens e clickjacking.
-
-**Banco.** O banco padrão é PostgreSQL e lê:
-
-\`\`\`text
+```text
 POSTGRES_DB
 POSTGRES_USER
 POSTGRES_PASSWORD
-POSTGRES_HOST
-POSTGRES_PORT
-\`\`\`
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+```
 
-No Compose, POSTGRES_HOST vale db, que é o DNS interno do serviço PostgreSQL. O banco não publica porta no host.
+PostgreSQL não publica porta nos perfis caseiro ou VPS.
 
-**Localidade e arquivos.** O projeto usa pt-br, America/Sao_Paulo e USE_TZ=True. Novos modelos usam BigAutoField. STATIC_ROOT recebe estáticos coletados e WhiteNoise os serve com nomes versionados e comprimidos. MEDIA_ROOT é /app/media no Compose, um volume compartilhado entre backend e worker.
+### Arquivos
 
-**CORS e DRF.** DJANGO_CORS_ALLOWED_ORIGINS define quais navegadores podem chamar a API. A rede interna Docker é diferente: o frontend chama o DNS backend sem publicar a API no host. O DRF oferece JSON, interface navegável, JSON, formulários e multipart/form-data, necessário para uploads.
+`STORAGES["default"]` é configurado por `MEDIA_STORAGE_BACKEND`:
 
-**Celery.** CELERY_BROKER_URL vale redis://redis:6379/0 no Compose. Não existe backend de resultados no Redis: o estado definitivo de jobs fica no PostgreSQL. As opções de confirmação tardia, rejeição quando worker morre e prefetch um reduzem a chance de perda de tarefas e limitam reservas simultâneas.
+```text
+filesystem  FileSystemStorage em MEDIA_ROOT
+s3          django-storages com bucket privado
+```
 
-Os limites de transcrição também vêm do ambiente:
+WhiteNoise serve apenas estáticos Django. Mídias não são expostas diretamente; elas
+são consumidas pelo worker e apagadas ao final.
 
-\`\`\`text
-TRANSCRIPTION_MAX_FILE_SIZE
-TRANSCRIPTION_MAX_DURATION_SECONDS
-TRANSCRIPTION_MAX_PENDING_JOBS
-ASSEMBLYAI_POLL_INTERVAL
-\`\`\`
+### Celery
 
-### config/urls.py
+Redis usa `redis://redis:6379/0`. Não existe result backend: o estado definitivo fica
+no PostgreSQL.
 
-É o roteador global:
+Configurações importantes:
 
-\`\`\`text
-/admin/                 Django Admin
-/api/health/            health check do app common
-/api/transcriptions/    rotas de transcrições
-\`\`\`
+```text
+acks_late=True
+reject_on_worker_lost=True
+worker_prefetch_multiplier=1
+max_tasks_per_child configurável
+```
 
-Ele apenas encaminha prefixos para cada app; não contém regra de negócio.
+Roteamento:
 
-### config/wsgi.py e config/asgi.py
+```text
+media        processamento local
+provider     AssemblyAI e conclusão
+maintenance reconciliação e limpeza
+```
 
-wsgi.py cria a aplicação atendida pelo Gunicorn e é a entrada HTTP usada hoje. asgi.py deixa o projeto preparado para usos assíncronos, como WebSockets, mas não é a entrada usada no Compose atual.
+## Rotas globais
 
-### config/celery.py e config/__init__.py
+```text
+/admin/
+/api/health/
+/api/auth/
+/api/transcriptions/
+/api/webhooks/assemblyai/{public_id}/
+```
 
-celery.py cria a aplicação Celery utilitydev, lê as configurações que começam por CELERY e descobre automaticamente arquivos tasks.py nos apps instalados. O __init__.py importa a aplicação durante a inicialização do pacote config, garantindo o registro das tarefas.
+Consulte [04-api-backend.md](04-api-backend.md) para contratos e segurança.
 
-## App common
+## Dependências principais
 
-apps/common/apps.py registra o app. apps/common/urls.py e views.py definem GET /api/health/. A resposta não exige autenticação nem permissão:
-
-\`\`\`json
-{"status":"ok","service":"backend"}
-\`\`\`
-
-Esse endpoint confirma que a API está disponível e permite ao frontend validar a integração.
-
-## Dependências
-
-| Dependência | Responsabilidade |
+| Dependência | Papel |
 |---|---|
-| Django | framework do backend |
-| Django REST Framework | API REST |
-| django-cors-headers | CORS |
-| psycopg | driver PostgreSQL |
-| Gunicorn | servidor WSGI |
-| WhiteNoise | estáticos |
-| Celery com Redis | fila e tarefas assíncronas |
-| requests | integração HTTP externa |
-| ReportLab | PDFs |
+| Django | aplicação, autenticação, sessões e admin |
+| Django REST Framework | API |
+| PostgreSQL/psycopg | persistência |
+| Celery + Redis | filas assíncronas |
+| Gunicorn | WSGI |
+| WhiteNoise | estáticos Django |
+| requests | AssemblyAI |
+| ReportLab | PDF em memória |
+| django-storages + boto3 | S3 compatível |
+| FFmpeg/ffprobe | inspeção e áudio canônico |
 
-As faixas em requirements.txt evitam atualizações automáticas entre versões principais incompatíveis.
+## Serviços Docker
 
-## Docker Compose
+Base:
 
-O arquivo [docker-compose.yml](../../docker-compose.yml) liga os serviços:
-
-\`\`\`text
+```text
 Navegador
    |
    v
-frontend:3000
-   |
-   v
-backend:8000 ---- db:5432 (PostgreSQL)
-   |
-   +---- redis:6379 (broker Celery)
-               |
-               v
-         worker (Celery e FFmpeg)
-\`\`\`
+frontend:3000 -> backend:8000 -> PostgreSQL
+                       |
+                       +------> Redis -> worker(s)
+```
 
-Apenas frontend publica uma porta no host; backend, banco e Redis ficam na rede privada do Compose.
+O backend inicia com migrations, collectstatic e dois workers Gunicorn. Backend e
+worker usam a mesma imagem, que inclui FFmpeg.
 
-### db
+Perfis:
 
-Usa postgres:16-alpine, recebe credenciais pelo .env e persiste em postgres_data. Seu health check usa pg_isready; backend e worker aguardam o banco saudável.
+```text
+docker-compose.home.yml  limites para i5/6 GB e worker solo
+docker-compose.dev.yml   portas loopback e concorrência 2
+docker-compose.vps.yml   Caddy, limites do Beat e workers separados
+```
 
-### redis
-
-Usa redis:7-alpine como broker Celery, com AOF ativo, limite de 96 MB e política noeviction. AOF ajuda a preservar a fila após reinícios. noeviction evita descartar jobs silenciosamente; o estado final continua no PostgreSQL. O volume é redis_data.
-
-### backend
-
-Usa a imagem de backend/Dockerfile, lê .env e recebe estas configurações internas:
-
-\`\`\`text
-POSTGRES_HOST=db
-POSTGRES_PORT=5432
-CELERY_BROKER_URL=redis://redis:6379/0
-MEDIA_ROOT=/app/media
-\`\`\`
-
-Monta transcription_media em /app/media, expõe 8000 apenas à rede Docker e inicia nesta sequência:
-
-\`\`\`bash
-python manage.py migrate
-python manage.py collectstatic --noinput
-gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 60
-\`\`\`
-
-Migrations e estáticos são preparados antes de atender requisições.
-
-### worker
-
-Usa a mesma imagem e o mesmo volume do backend, mas roda:
-
-\`\`\`bash
-celery -A config worker --loglevel=INFO --pool=solo --concurrency=1
-\`\`\`
-
-A concorrência unitária evita que dois FFmpeg disputem CPU e memória do servidor doméstico.
-
-### frontend e frontend-check
-
-Frontend é a única entrada para usuários e recebe API_INTERNAL_BASE_URL=http://backend:8000. A porta publicada é configurada pelo valor de TAILSCALE_IP e, na ausência dele, fica limitada a 127.0.0.1:3000. frontend-check apenas roda o lint do frontend.
-
-### Volumes
-
-| Volume | Conteúdo |
-|---|---|
-| postgres_data | dados PostgreSQL |
-| redis_data | AOF e dados Redis |
-| transcription_media | uploads e temporários de transcrição |
-
-Não use docker compose down -v em ambiente com dados importantes: ele remove os volumes.
-
-## Imagem do backend
-
-backend/Dockerfile parte de python:3.12-slim, instala FFmpeg e ffprobe, instala dependências, copia o código e roda collectstatic. Seu comando padrão usa Gunicorn com três workers, mas o Compose o substitui pelo comando que executa migrations e inicia Gunicorn com dois workers; portanto, Compose é a fonte da execução efetiva.
-
-backend/.dockerignore exclui caches Python, ambientes virtuais e db.sqlite3 do contexto de build.
+Detalhes estão em [11-docker-contexto.md](11-docker-contexto.md).
 
 ## Inicialização
 
-Crie o ambiente:
-
-\`\`\`bash
+```bash
 cp .env.example .env
-\`\`\`
+docker compose -f docker-compose.yml -f docker-compose.home.yml up -d --build
+docker compose exec backend python manage.py createsuperuser
+```
 
-Preencha ao menos:
+Para desenvolvimento ou VPS, substitua o override. Nunca execute
+`docker compose down -v` em ambiente com dados importantes.
 
-\`\`\`dotenv
-TAILSCALE_IP=<ip-do-servidor-ou-vazio>
-DJANGO_SECRET_KEY=<chave-longa-e-aleatoria>
-DJANGO_ALLOWED_HOSTS=backend,<ip-tailscale>
-POSTGRES_PASSWORD=<senha-forte>
-ASSEMBLYAI_API_KEY=<chave-da-assemblyai>
-\`\`\`
+## Validação
 
-Inicie:
+```bash
+docker compose run --rm backend python manage.py check
+docker compose run --rm backend python manage.py makemigrations --check --dry-run
+docker compose run --rm backend python manage.py test apps.accounts apps.transcriptions
+docker compose build frontend
+```
 
-\`\`\`bash
-docker compose up -d --build
-docker compose ps
-docker compose logs -f backend worker
-\`\`\`
-
-Na primeira execução, os volumes são criados, banco e Redis passam por health checks, backend aplica migrations e inicia Gunicorn, worker conecta ao Redis e frontend passa a servir a aplicação na porta 3000.
-
-## Estado atual
-
-A base já contém Django, DRF, PostgreSQL, Redis, Celery, Gunicorn, WhiteNoise, health check e estrutura modular. Autenticação e associação de jobs a usuários ainda não existem no fluxo de transcrição.
-
+O estado validado possui 20 testes de backend e verificação TypeScript do Next.js.
