@@ -7,8 +7,8 @@ delimita o MVP, o impacto técnico e o que deve ficar para uma evolução poster
 
 ### Etapa 1 — ferramentas somente no navegador
 
-1. [Sorteador](005-sorteador.md) — implementado
-2. [Ordem de apresentação](006-ordem-de-apresentacao.md)
+1. [Sorteador](005-sorteador.md)
+2. [Ordem de apresentação](006-ordem-de-apresentacao.md) — implementada
 3. [Divisor de grupos](007-divisor-de-grupos.md)
 4. [Gerador de QR Code](008-gerador-de-qr-code.md)
 

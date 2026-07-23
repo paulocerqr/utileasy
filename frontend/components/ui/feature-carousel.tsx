@@ -130,6 +130,8 @@ const FEATURES: Feature[] = [
         "Ordem de apresentação",
         ListOrdered,
         "Organize a ordem de apresentações em equipe rapidamente.",
+        "/ordem-de-apresentacao",
+        "Abrir ferramenta",
       ],
       [
         "divisor-grupos",
