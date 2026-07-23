@@ -81,7 +81,8 @@ export function ProductivitySection() {
         <ToolCard
           icon={Shuffle}
           title="Sorteador"
-          description="Sorteie nomes, números ou grupos de forma aleatória."
+          description="Sorteie números ou itens de uma lista sem repetições."
+          href="/sorteador"
         />
         <ToolCard
           icon={ListOrdered}
