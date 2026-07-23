@@ -5,23 +5,15 @@ import Link from "next/link"
 import {
   ArrowLeft,
   ArrowRight,
-  Box,
-  Database,
-  DownloadCloud,
   FilePlus2,
   FileText,
   Film,
   Gauge,
-  GitBranch,
-  GitCompare,
   ImageIcon,
-  KeyRound,
   ListOrdered,
   Mic,
-  MonitorDown,
   QrCode,
   Shuffle,
-  Terminal,
   Users,
   type LucideIcon,
 } from "lucide-react"
@@ -157,58 +149,10 @@ const FEATURES: Feature[] = [
     "#devs",
     [
       [
-        "jwt",
-        "Decodificador JWT",
-        KeyRound,
-        "Inspecione o payload de tokens JSON Web com segurança.",
-      ],
-      [
         "velocidade",
         "Teste de velocidade",
         Gauge,
         "Verifique a latência e a velocidade da sua conexão.",
-      ],
-      [
-        "linux-dicas",
-        "Dicas de Linux",
-        Terminal,
-        "Comandos, atalhos e boas práticas para o dia a dia no terminal.",
-      ],
-      [
-        "linux-distros",
-        "Distribuições Linux",
-        MonitorDown,
-        "Conheça as principais distros e para quem cada uma serve.",
-      ],
-      [
-        "linux-download",
-        "Onde baixar Linux",
-        DownloadCloud,
-        "Encontre fontes oficiais e seguras para baixar sua distribuição.",
-      ],
-      [
-        "linux-comparar",
-        "Comparar distros",
-        GitCompare,
-        "Compare distribuições Linux lado a lado.",
-      ],
-      [
-        "git",
-        "Dicas de Git",
-        GitBranch,
-        "Explore fluxos, comandos essenciais e boas práticas com Git.",
-      ],
-      [
-        "docker",
-        "Dicas de Docker",
-        Box,
-        "Consulte containers, imagens e comandos úteis do Docker.",
-      ],
-      [
-        "banco-dados",
-        "Dicas de Banco de Dados",
-        Database,
-        "Aprenda SQL, modelagem e performance para o dia a dia.",
       ],
     ],
   ),
@@ -283,10 +227,6 @@ export function FeatureCarousel() {
             Uma ferramenta para cada tarefa
           </h2>
         </div>
-        <p className="max-w-md text-sm leading-relaxed text-muted-foreground sm:text-right">
-          Navegue pelos recursos disponíveis e encontre o atalho certo para o
-          que você precisa agora.
-        </p>
       </div>
 
       <div
@@ -303,6 +243,12 @@ export function FeatureCarousel() {
           if (event.key === "ArrowRight") goToNext()
         }}
       >
+        <span
+          id="feature-carousel"
+          aria-hidden="true"
+          className="pointer-events-none absolute left-0 top-1/2 scroll-mt-[50vh]"
+        />
+
         <div className="relative z-30 flex min-h-[330px] w-full items-center justify-center overflow-hidden bg-transparent px-6 backdrop-blur-xl md:min-h-[380px] md:px-12 lg:min-h-0 lg:w-[42%] lg:justify-start lg:px-14">
           <div className="absolute inset-x-0 top-0 z-40 h-16 bg-gradient-to-b from-background/35 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 z-40 h-16 bg-gradient-to-t from-background/35 to-transparent" />

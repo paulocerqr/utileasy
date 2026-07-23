@@ -1,13 +1,70 @@
 "use client"
 
-import { useState } from "react"
+import { FormEvent, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react"
 
 export function LoginForm() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError("")
+    setIsSubmitting(true)
+    const form = new FormData(event.currentTarget)
+    try {
+      const csrfResponse = await fetch("/api/auth/csrf", { cache: "no-store" })
+      const csrfData = await csrfResponse.json()
+      if (!csrfResponse.ok) throw new Error("Não foi possível iniciar a sessão.")
+
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfData.csrf_token,
+        },
+        body: JSON.stringify({
+          username: form.get("username"),
+          password: form.get("password"),
+        }),
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(data?.detail || "Não foi possível entrar.")
+      const pendingRaw = sessionStorage.getItem("utileazy:pending-anonymous-job")
+      if (pendingRaw) {
+        try {
+          const pending = JSON.parse(pendingRaw) as { id: string; token: string }
+          const claimCsrfResponse = await fetch("/api/auth/csrf", { cache: "no-store" })
+          const claimCsrfData = await claimCsrfResponse.json()
+          if (!claimCsrfResponse.ok || !claimCsrfData?.csrf_token) {
+            throw new Error("Não foi possível renovar o CSRF após o login.")
+          }
+          const claimResponse = await fetch(`/api/transcriptions/${pending.id}/claim`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": claimCsrfData.csrf_token,
+              "X-Job-Token": pending.token,
+            },
+          })
+          if (claimResponse.ok) sessionStorage.removeItem("utileazy:pending-anonymous-job")
+        } catch {
+          // Login remains successful even if an expired anonymous job cannot be claimed.
+        }
+      }
+      router.push("/transcrisao")
+      router.refresh()
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Não foi possível entrar.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
-    <form onSubmit={(event) => event.preventDefault()} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
         <label htmlFor="username" className="text-sm font-medium text-foreground">
           Nome de usuário
@@ -59,10 +116,16 @@ export function LoginForm() {
 
       <button
         type="submit"
+        disabled={isSubmitting}
         className="h-11 w-full rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed"
       >
-        Entrar
+        {isSubmitting ? "Entrando..." : "Entrar"}
       </button>
+      {error ? (
+        <p className="rounded-lg border border-warning/60 bg-warning/10 px-3 py-2 text-sm text-warning-foreground">
+          {error}
+        </p>
+      ) : null}
     </form>
   )
 }

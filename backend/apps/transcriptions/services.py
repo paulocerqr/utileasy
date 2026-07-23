@@ -1,6 +1,9 @@
 import hashlib
 import json
+import shutil
 import subprocess
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 from django.conf import settings
@@ -16,6 +19,34 @@ def storage_path(relative_name):
         return Path(default_storage.path(relative_name))
     except NotImplementedError as exc:
         raise MediaProcessingError("O processamento local exige storage em disco.") from exc
+
+
+@contextmanager
+def materialize_storage_file(relative_name):
+    """Yield a local path for either filesystem or remote Django storage."""
+    try:
+        local_storage_path = Path(default_storage.path(relative_name))
+    except NotImplementedError:
+        local_storage_path = None
+
+    if local_storage_path is not None:
+        yield local_storage_path
+        return
+
+    suffix = Path(relative_name).suffix
+    with tempfile.TemporaryDirectory(prefix="utileazy-media-") as temp_dir:
+        local_path = Path(temp_dir) / f"input{suffix}"
+        try:
+            with default_storage.open(relative_name, "rb") as source, local_path.open("wb") as target:
+                shutil.copyfileobj(source, target, length=1024 * 1024)
+        except OSError as exc:
+            raise MediaProcessingError("Não foi possível obter o arquivo enviado.") from exc
+        yield local_path
+
+
+def save_local_file(file_path, relative_name):
+    with Path(file_path).open("rb") as source:
+        return default_storage.save(relative_name, source)
 
 
 def inspect_media(input_path):

@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "apps.common",
+    "apps.accounts",
     "apps.transcriptions",
 ]
 
@@ -93,7 +94,25 @@ MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", BASE_DIR / "media"))
 MEDIA_URL = "/media/"
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": (
+            "storages.backends.s3.S3Storage"
+            if os.getenv("MEDIA_STORAGE_BACKEND", "filesystem") == "s3"
+            else "django.core.files.storage.FileSystemStorage"
+        ),
+        "OPTIONS": (
+            {
+                "bucket_name": os.getenv("S3_BUCKET_NAME", ""),
+                "endpoint_url": os.getenv("S3_ENDPOINT_URL") or None,
+                "region_name": os.getenv("S3_REGION") or None,
+                "access_key": os.getenv("S3_ACCESS_KEY") or None,
+                "secret_key": os.getenv("S3_SECRET_KEY") or None,
+                "default_acl": None,
+                "querystring_auth": True,
+                "file_overwrite": False,
+            }
+            if os.getenv("MEDIA_STORAGE_BACKEND", "filesystem") == "s3"
+            else {"location": MEDIA_ROOT}
+        ),
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -111,6 +130,12 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
@@ -122,6 +147,18 @@ REST_FRAMEWORK = {
     ],
 }
 
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+SESSION_COOKIE_SECURE = os.getenv("DJANGO_SECURE_COOKIES", "0") == "1"
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = None
 CELERY_TASK_TRACK_STARTED = False
@@ -129,8 +166,65 @@ CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_TASK_DEFAULT_QUEUE = "provider"
+CELERY_TASK_ROUTES = {
+    "apps.transcriptions.tasks.process_transcription": {"queue": "media"},
+    "apps.transcriptions.tasks.submit_transcription": {"queue": "provider"},
+    "apps.transcriptions.tasks.poll_transcription": {"queue": "provider"},
+    "apps.transcriptions.tasks.finalize_transcription": {"queue": "provider"},
+    "apps.transcriptions.tasks.reconcile_stale_transcriptions": {"queue": "maintenance"},
+    "apps.transcriptions.tasks.cleanup_orphaned_files": {"queue": "maintenance"},
+    "apps.transcriptions.tasks.purge_expired_anonymous_data": {"queue": "maintenance"},
+}
+CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.getenv("CELERY_MAX_TASKS_PER_CHILD", "50"))
 
 TRANSCRIPTION_MAX_FILE_SIZE = int(os.getenv("TRANSCRIPTION_MAX_FILE_SIZE", 500 * 1024 * 1024))
 TRANSCRIPTION_MAX_DURATION_SECONDS = int(os.getenv("TRANSCRIPTION_MAX_DURATION_SECONDS", 7200))
 TRANSCRIPTION_MAX_PENDING_JOBS = int(os.getenv("TRANSCRIPTION_MAX_PENDING_JOBS", 10))
+TRANSCRIPTION_MAX_PENDING_PER_USER = int(os.getenv("TRANSCRIPTION_MAX_PENDING_PER_USER", 2))
+TRANSCRIPTION_MAX_PENDING_PER_ANON = int(os.getenv("TRANSCRIPTION_MAX_PENDING_PER_ANON", 1))
+TRANSCRIPTION_DAILY_BUDGET_SECONDS = int(
+    os.getenv("TRANSCRIPTION_DAILY_BUDGET_SECONDS", "14400")
+)
+ANONYMOUS_RESULT_TTL_HOURS = int(os.getenv("ANONYMOUS_RESULT_TTL_HOURS", "24"))
+ANONYMOUS_COOKIE_NAME = os.getenv("ANONYMOUS_COOKIE_NAME", "utileazy_anon")
+ANONYMOUS_COOKIE_MAX_AGE = ANONYMOUS_RESULT_TTL_HOURS * 3600
+ANON_IP_BURST_LIMIT = int(os.getenv("ANON_IP_BURST_LIMIT", "2"))
+ANON_IP_DAILY_LIMIT = int(os.getenv("ANON_IP_DAILY_LIMIT", "10"))
+ANON_COOKIE_DAILY_LIMIT = int(os.getenv("ANON_COOKIE_DAILY_LIMIT", "3"))
+TURNSTILE_SITE_KEY = os.getenv("TURNSTILE_SITE_KEY", "")
+TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
+TURNSTILE_EXPECTED_HOSTNAME = os.getenv("TURNSTILE_EXPECTED_HOSTNAME", "")
+TURNSTILE_EXPECTED_ACTION = os.getenv(
+    "TURNSTILE_EXPECTED_ACTION", "anonymous_transcription"
+)
+TURNSTILE_ENABLED = os.getenv("TURNSTILE_ENABLED", "1") == "1"
 ASSEMBLYAI_POLL_INTERVAL = int(os.getenv("ASSEMBLYAI_POLL_INTERVAL", 10))
+TRANSCRIPTION_COMPLETION_MODE = os.getenv("TRANSCRIPTION_COMPLETION_MODE", "polling").lower()
+PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
+ASSEMBLYAI_WEBHOOK_SECRET = os.getenv("ASSEMBLYAI_WEBHOOK_SECRET", "")
+TRANSCRIPTION_RECONCILE_AFTER_SECONDS = int(
+    os.getenv("TRANSCRIPTION_RECONCILE_AFTER_SECONDS", "300")
+)
+
+if TRANSCRIPTION_COMPLETION_MODE not in {"polling", "webhook"}:
+    raise ValueError("TRANSCRIPTION_COMPLETION_MODE deve ser 'polling' ou 'webhook'.")
+if TRANSCRIPTION_COMPLETION_MODE == "webhook" and (
+    not PUBLIC_BASE_URL or not ASSEMBLYAI_WEBHOOK_SECRET
+):
+    raise ValueError("O modo webhook exige PUBLIC_BASE_URL e ASSEMBLYAI_WEBHOOK_SECRET.")
+
+CELERY_BEAT_SCHEDULE = {
+    "reconcile-stale-transcriptions": {
+        "task": "apps.transcriptions.tasks.reconcile_stale_transcriptions",
+        "schedule": 300.0,
+    },
+    "cleanup-orphaned-transcription-files": {
+        "task": "apps.transcriptions.tasks.cleanup_orphaned_files",
+        "schedule": 3600.0,
+    },
+    "purge-expired-anonymous-data": {
+        "task": "apps.transcriptions.tasks.purge_expired_anonymous_data",
+        "schedule": 3600.0,
+    },
+}

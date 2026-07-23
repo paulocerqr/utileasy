@@ -93,8 +93,10 @@ O build atual do Next compila as rotas:
 /pdf-docx
 /transcrisao
 /_not-found
+/api/auth/[...path]
 /api/transcriptions
 /api/transcriptions/[...path]
+/api/webhooks/[...path]
 ```
 
 Observação: a rota existente é `/transcrisao`, sem cedilha e com essa grafia. Não renomear sem ajustar links, documentação e navegação.
@@ -104,6 +106,11 @@ Observação: a rota existente é `/transcrisao`, sem cedilha e com essa grafia.
 ```text
 frontend/
   app/
+    api/
+      auth/[...path]/route.ts
+      transcriptions/route.ts
+      transcriptions/[...path]/route.ts
+      webhooks/[...path]/route.ts
     layout.tsx
     page.tsx
     globals.css
@@ -133,6 +140,7 @@ frontend/
       upload-area.tsx
   lib/
     api.ts
+    backend-proxy.ts
     utils.ts
   types/
     pdfjs-dist-webpack.d.ts
@@ -335,11 +343,14 @@ Estado atual:
 
 ```text
 - cabeçalho fixo com marca Utileazy
-- navegação principal para Início, Explorar, Categorias e Recentes
+- navegação principal para Início, Desenvolvedores e Recentes
 - barra lateral recolhível com domínios e ferramentas
 - link de Juntar PDFs para /juntarpdf
 - botão ThemeToggle
-- links Entrar e Criar conta para /login
+- consulta `GET /api/auth/me` ao navegar
+- quando anônimo, exibe o link Entrar
+- quando autenticado, exibe username e botão Sair
+- logout obtém CSRF, encerra a sessão e redireciona para /login
 ```
 
 ### Hero
@@ -548,6 +559,11 @@ Estado atual:
 - Aceita MP3, WAV, M4A, AAC, OGG, FLAC, MP4, MOV, MKV, WebM e AVI.
 - Valida o limite de 500 MB antes do envio.
 - Envia FormData para POST /api/transcriptions.
+- Obtém um token em GET /api/auth/csrf antes do upload.
+- Envia o token no header X-CSRFToken.
+- Inicializa cookie anônimo e Turnstile quando não existe login.
+- Guarda temporariamente o segredo do job anônimo em sessionStorage.
+- Exibe erros 400 de CAPTCHA e 429 de limite devolvidos pelo backend.
 - Consulta o status do job a cada 5 segundos.
 - Exibe estados de processamento, erros e o texto concluído.
 - Permite copiar a transcrição e baixar o PDF gerado pelo backend.
@@ -604,6 +620,9 @@ Implementado:
 - Rota /pdf-docx com fluxo visual de conversão.
 - Rota /juntarpdf para seleção, pré-visualização e ordenação local de PDFs.
 - Rota /transcrisao integrada ao backend para upload, polling e download.
+- Login real por sessão Django, cookie HttpOnly e CSRF.
+- Identificação do usuário e logout no AppShell.
+- Proxy same-origin para autenticação, transcrições e webhook.
 - Tema claro e escuro com persistência em localStorage.
 - Imagens de fundo diferentes por rota e por tema.
 - Fonte global Geist Mono.
@@ -615,8 +634,8 @@ Implementado:
 Ainda não implementado:
 
 ```text
-- Login/cadastro real.
-- Histórico real de transcrições.
+- Cadastro público; usuários são criados pelo administrador Django.
+- Tela visual de histórico; o endpoint autenticado já existe no backend.
 - Guia de uso funcional.
 - Mesclagem real dos PDFs selecionados em /juntarpdf.
 - Envio dos PDFs de /juntarpdf para o backend.
@@ -637,6 +656,7 @@ Ainda não implementado:
 - Para textos sobre imagem, preferir card/superfície com bg-card/90 e border-border.
 - Não recolocar canvas de fundo na home; ele foi substituído por imagens.
 - Ao alterar frontend, validar com docker compose build frontend e depois docker compose up -d frontend.
+- POSTs autenticados devem obter CSRF em /api/auth/csrf e enviar X-CSRFToken.
 - O arquivo components/transcrisao/upload-area.tsx parece legado/duplicado; a rota atual usa components/transcricao/upload-area.tsx.
 ```
 
@@ -688,13 +708,14 @@ A rota funcional é `/transcrisao` e importa `frontend/components/transcricao/up
 ### Fluxo da interface
 
 ```text
-1. Usuário seleciona ou arrasta um arquivo.
-2. Frontend valida extensão e limite de 500 MB.
-3. Frontend envia FormData no campo `file`.
-4. API retorna um UUID público e status `queued`.
-5. Frontend consulta o status a cada 5 segundos.
-6. Ao concluir, renderiza o texto em um card.
-7. Usuário pode copiar o texto ou baixar o PDF.
+1. Usuário entra com uma conta criada pelo administrador.
+2. Usuário seleciona ou arrasta um arquivo.
+3. Frontend valida extensão e limite de 500 MB.
+4. Frontend obtém CSRF e envia FormData no campo `file` com X-CSRFToken.
+5. API cria o job da conta ou um job temporário com UUID e segredo adicional.
+6. Frontend consulta a cada 5 segundos usando sessão ou `X-Job-Token`.
+7. Ao concluir, renderiza o texto em um card.
+8. Usuário pode copiar o texto ou baixar o PDF do próprio job.
 ```
 
 Formatos aceitos:
@@ -704,7 +725,7 @@ Formatos aceitos:
 Vídeo: MP4, MOV, MKV, WebM, AVI
 ```
 
-O frontend não usa FFmpeg WASM, não calcula o hash do arquivo inteiro no navegador e não possui player, WebSocket, histórico ou diarização. A preparação do áudio e a deduplicação são responsabilidades do worker no backend.
+O frontend não usa FFmpeg WASM, não calcula o hash do arquivo inteiro no navegador e não possui player, WebSocket, tela de histórico ou diarização. A preparação do áudio, propriedade e deduplicação são responsabilidades do backend. O histórico já pode ser obtido por `GET /api/transcriptions/`, mas ainda não possui tela própria.
 
 ### Estados exibidos
 
@@ -725,20 +746,67 @@ O card final exibe o nome original, a quantidade de palavras, indicação de res
 Como somente o frontend é publicado no host, o navegador usa estas rotas do Next:
 
 ```text
+GET  /api/auth/csrf
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/me
 POST /api/transcriptions
 GET  /api/transcriptions/{uuid}
 GET  /api/transcriptions/{uuid}/pdf
+POST /api/webhooks/assemblyai/{uuid}/
 ```
 
-Os handlers em `frontend/app/api/transcriptions/` encaminham as requisições em streaming para `API_INTERNAL_BASE_URL`, normalmente `http://backend:8000`. O `Content-Length` do multipart é preservado para que uploads grandes cheguem corretamente ao Gunicorn.
+`frontend/lib/backend-proxy.ts` implementa o proxy comum. Os handlers em
+`frontend/app/api/auth/`, `transcriptions/` e `webhooks/` encaminham método, headers,
+cookies, corpo em streaming, status e resposta para `API_INTERNAL_BASE_URL`,
+normalmente `http://backend:8000`. O `Content-Length` do multipart é preservado para
+que uploads grandes cheguem corretamente ao Gunicorn.
+
+O webhook também passa pelo Next: na VPS, Caddy publica o domínio HTTPS, Next recebe
+`/api/webhooks/...` e encaminha ao Django privado. O segredo permanece em header e
+é validado somente pelo backend.
+
+### Autenticação da interface
+
+Arquivos principais:
+
+```text
+frontend/app/login/page.tsx
+frontend/components/login-form.tsx
+frontend/components/app-shell.tsx
+frontend/app/api/auth/[...path]/route.ts
+```
+
+Fluxo de login:
+
+```text
+1. LoginForm chama GET /api/auth/csrf.
+2. Envia username/password em JSON com X-CSRFToken.
+3. Django devolve Set-Cookie da sessão através do proxy Next.
+4. A interface redireciona para /transcrisao.
+5. AppShell consulta /api/auth/me e mostra o username.
+```
+
+Fluxo de logout:
+
+```text
+1. AppShell obtém CSRF.
+2. Envia POST /api/auth/logout.
+3. Limpa o estado local e redireciona para /login.
+```
+
+Não existe token em `localStorage` nem JWT. O segredo de um job anônimo fica apenas
+em estado e `sessionStorage`, para sobreviver ao redirecionamento de login e permitir
+o claim. O formulário não oferece cadastro público.
 
 ### Limitações atuais
 
 ```text
-- Não existe autenticação associada ao job.
 - O polling é interrompido visualmente após 720 consultas, mas o job continua salvo no backend.
-- Histórico e Guia de Uso ainda são funcionalidades futuras.
+- A tela de histórico e o Guia de Uso ainda são funcionalidades futuras.
+- Não há cadastro público nem recuperação de senha pela interface.
 - O download de PDF é feito pelo endpoint do backend, não por window.print().
+- O resultado anônimo expira em 24 horas se não for reivindicado após login.
 ```
 
 O build validado do Next inclui:
@@ -749,8 +817,11 @@ O build validado do Next inclui:
 /login
 /pdf-docx
 /transcrisao
+/api/auth/[...path]
+/api/anonymous/[...path]
 /api/transcriptions
 /api/transcriptions/[...path]
+/api/webhooks/[...path]
 /_not-found
 ```
 

@@ -68,7 +68,7 @@ const devTools = [
 
 export function DevSection() {
   return (
-    <section id="devs" className="relative z-10 mx-auto max-w-7xl px-6 py-10">
+    <section id="devs" className="relative z-10 mx-auto max-w-7xl scroll-mt-24 px-6 py-10">
         <div className="rounded-2xl border border-border bg-card/40 p-6 backdrop-blur-md md:p-8">
         <div className="mb-2 flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary">

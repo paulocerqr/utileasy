@@ -1,124 +1,115 @@
-# Contexto Docker do Utileazy
+# Contexto Docker atual
 
-Este documento registra as alterações feitas no Docker Compose para suportar a transcrição assíncrona.
-
-## 1. Serviços atuais
+## Serviços base
 
 ```text
-db               PostgreSQL 16
-redis            Redis 7, broker persistente do Celery
-backend          Django + Gunicorn
-worker           Celery + FFmpeg + pipeline de transcrição
-frontend         Next.js publicado na porta 3000
-frontend-check   verificação TypeScript do frontend
+db              PostgreSQL 16
+redis           Redis 7 com AOF, 96 MB e noeviction
+backend         Django + Gunicorn, migrations e collectstatic
+worker          Celery; comportamento escolhido pelo override
+beat            agendador leve de reconciliação, limpeza e expiração
+frontend        Next.js de produção
+frontend-check  TypeScript com tsc --noEmit
 ```
 
-Somente o serviço `frontend` publica uma porta no host:
+Volumes base:
 
 ```text
-${TAILSCALE_IP:-127.0.0.1}:3000:3000
+postgres_data       banco
+redis_data          AOF do broker
+transcription_media uploads e canônicos quando filesystem está ativo
 ```
 
-O backend, PostgreSQL e Redis ficam apenas na rede interna do Compose.
+Além das filas, o Redis guarda `utileazy:rate:*` para rajada e janelas anônimas de 24
+horas. O AOF e o volume fazem esses contadores sobreviverem à recriação dos
+containers; eles expiram pelo próprio TTL e não incluem transcrições históricas.
 
-## 2. Redis
+## Compose base
+
+`docker-compose.yml` define rede, health checks, dependências e defaults seguros. O
+worker lê do ambiente:
 
 ```text
-Redis 7 Alpine
-AOF habilitado
-maxmemory: 96 MB
-maxmemory-policy: noeviction
+CELERY_WORKER_POOL
+CELERY_WORKER_CONCURRENCY
+CELERY_WORKER_QUEUES
 ```
 
-O volume é `redis_data:/data`. O AOF ajuda a preservar tarefas enfileiradas durante reinícios; o estado definitivo do job permanece no PostgreSQL.
+Os defaults continuam adequados ao servidor caseiro: `solo`, concorrência 1 e filas
+`media,provider,maintenance`.
 
-## 3. Backend e worker
+## Perfil caseiro
 
-Backend e worker usam a mesma imagem construída em `backend/Dockerfile`. A imagem instala FFmpeg/ffprobe e as dependências Python do Django, Celery, requests e ReportLab.
-
-O worker é iniciado com:
+`docker-compose.home.yml` aplica limites de CPU/RAM e fixa o worker sequencial. O
+frontend é publicado no IP Tailscale; demais serviços ficam internos.
 
 ```bash
-celery -A config worker --loglevel=INFO --pool=solo --concurrency=1
+docker compose -f docker-compose.yml -f docker-compose.home.yml up -d --build
 ```
 
-A concorrência unitária evita que dois processos FFmpeg consumam simultaneamente os dois núcleos do servidor doméstico. O backend usa dois workers Gunicorn.
+## Perfil de desenvolvimento
 
-## 4. Volumes
-
-Backend e worker compartilham:
-
-```text
-transcription_media:/app/media
-```
-
-O upload entra em `/app/media/transcriptions/uploads`. O áudio normalizado é criado em `/app/media/transcriptions/processed`. Ambos são removidos após o envio ou falha do job.
-
-O PostgreSQL continua usando `postgres_data:/var/lib/postgresql/data`.
-
-## 5. Variáveis novas
-
-Adicionar ao `.env`:
-
-```text
-ASSEMBLYAI_API_KEY=
-TRANSCRIPTION_MAX_FILE_SIZE=524288000
-TRANSCRIPTION_MAX_DURATION_SECONDS=7200
-TRANSCRIPTION_MAX_PENDING_JOBS=10
-ASSEMBLYAI_POLL_INTERVAL=10
-```
-
-O Compose injeta internamente:
-
-```text
-CELERY_BROKER_URL=redis://redis:6379/0
-MEDIA_ROOT=/app/media
-POSTGRES_HOST=db
-POSTGRES_PORT=5432
-```
-
-## 6. Inicialização e atualização
-
-No PC de desenvolvimento:
+`docker-compose.dev.yml` publica PostgreSQL e backend em loopback e usa prefork com
+concorrência 2.
 
 ```bash
-cp .env.example .env
-# preencher DJANGO_SECRET_KEY, POSTGRES_PASSWORD e ASSEMBLYAI_API_KEY
-docker compose up -d --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+## Perfil VPS
+
+`docker-compose.vps.yml` altera e acrescenta:
+
+```text
+worker             somente fila media
+worker-provider    filas provider e maintenance
+beat               recebe limites de CPU/RAM do perfil
+caddy              HTTPS e reverse proxy para frontend
+caddy_data         certificados
+caddy_config       configuração persistente
+```
+
+Concorrências:
+
+```text
+VPS_MEDIA_CONCURRENCY       1 em 2 vCPU; 2 em 4 vCPU
+VPS_PROVIDER_CONCURRENCY    padrão 2
+```
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.vps.yml up -d --build
+```
+
+O frontend continua encaminhando `/api/auth`, `/api/anonymous`, `/api/transcriptions` e
+`/api/webhooks` para `http://backend:8000`. Assim, o backend não precisa publicar
+porta mesmo quando recebe callbacks externos.
+
+## Filesystem e S3
+
+Backend e workers ainda montam `transcription_media`, necessário quando
+`MEDIA_STORAGE_BACKEND=filesystem`. Com `s3`, as mesmas chaves apontam para o bucket
+privado e cada worker materializa o objeto em diretório temporário local.
+
+## Inicialização do backend
+
+O comando efetivo continua:
+
+```text
+python manage.py migrate
+python manage.py collectstatic --noinput
+gunicorn com 2 workers e timeout 60
+```
+
+O Dockerfile instala FFmpeg/ffprobe e dependências Python, incluindo
+`django-storages[s3]`.
+
+## Operação
+
+```bash
 docker compose ps
-docker compose logs -f worker
-```
-
-O backend executa automaticamente `migrate`, `collectstatic` e inicia o Gunicorn com dois workers.
-
-No servidor doméstico:
-
-```bash
-git pull
-docker compose up -d --build
-docker compose ps
-```
-
-Não executar `docker compose down -v` em um ambiente com dados importantes, pois isso remove o volume do PostgreSQL.
-
-## 7. Validações realizadas
-
-```bash
-docker compose config --quiet
-docker compose build backend frontend
+docker compose logs -f backend worker
 docker compose run --rm backend python manage.py check
-docker compose run --rm backend python manage.py makemigrations --check --dry-run
-docker compose run --rm backend python manage.py test apps.transcriptions --verbosity 2
 ```
 
-O build do frontend confirmou as rotas `/transcrisao` e `/api/transcriptions`. O proxy local respondeu ao endpoint de upload e um job inválido percorreu a fila até `failed`, com remoção do arquivo temporário.
-
-## 8. Observações para o servidor limitado
-
-```text
-- Manter worker com concorrência 1.
-- Monitorar espaço do volume transcription_media.
-- Não aumentar Gunicorn ou Celery sem medir RAM/CPU.
-- Configurar vm.overcommit_memory=1 no host se o Redis continuar emitindo o alerta de AOF/fork.
-- Usar somente um job de FFmpeg por vez; a AssemblyAI continua sendo o processamento pesado remoto.
-```
+No perfil VPS, acompanhe também `worker-provider`, `beat` e `caddy`. Não remova
+volumes em produção e monitore espaço, RAM, fila e tempo de upload.

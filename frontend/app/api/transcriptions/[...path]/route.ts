@@ -11,3 +11,8 @@ export async function GET(request: Request, context: RouteContext) {
   const { path } = await context.params
   return proxyTranscriptionRequest(request, `${path.join("/")}/`)
 }
+
+export async function POST(request: Request, context: RouteContext) {
+  const { path } = await context.params
+  return proxyTranscriptionRequest(request, `${path.join("/")}/`)
+}

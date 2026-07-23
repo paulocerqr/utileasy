@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { LoginForm } from "@/components/login-form"
 
 export const metadata: Metadata = {
@@ -29,10 +28,7 @@ export default function LoginPage() {
           <LoginForm />
 
           <p className="mt-7 text-center text-xs text-muted-foreground">
-            Ainda não possui uma conta?{" "}
-            <Link href="#criar-conta" className="font-medium text-brand-light hover:text-foreground">
-              Criar conta
-            </Link>
+            Novas contas são criadas pelo administrador do Utileazy.
           </p>
         </section>
       </div>
