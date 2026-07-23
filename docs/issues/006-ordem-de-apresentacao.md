@@ -5,6 +5,8 @@
 **Complexidade:** Baixa  
 **Prioridade sugerida:** Etapa 1
 
+**Estado:** Implementada
+
 ## Descrição da tarefa
 
 Criar uma ferramenta dedicada a receber participantes ou equipes e produzir uma ordem
@@ -33,13 +35,12 @@ Nenhum. Todo o processamento ocorre no navegador.
 
 ## Critérios de aceitação
 
-- [ ] A ferramenta exige pelo menos dois participantes válidos.
-- [ ] Cada participante aparece exatamente uma vez no resultado.
-- [ ] A lista final é numerada a partir de 1.
-- [ ] Um novo sorteio pode produzir outra ordem após confirmação.
-- [ ] O resultado pode ser copiado e baixado em TXT.
-- [ ] Entradas duplicadas são claramente tratadas antes do sorteio.
-- [ ] Nenhum nome é enviado ou persistido.
-- [ ] A interface é utilizável por teclado e em telas móveis.
-- [ ] Testes garantem preservação dos participantes e ausência de repetição.
-
+- [x] A ferramenta exige pelo menos dois participantes válidos.
+- [x] Cada participante aparece exatamente uma vez no resultado.
+- [x] A lista final é numerada a partir de 1.
+- [x] Um novo sorteio pode produzir outra ordem após confirmação.
+- [x] O resultado pode ser copiado e baixado em TXT.
+- [x] Entradas duplicadas são claramente tratadas antes do sorteio.
+- [x] Nenhum nome é enviado ou persistido.
+- [x] A interface é utilizável por teclado e em telas móveis.
+- [x] Testes garantem preservação dos participantes e ausência de repetição.

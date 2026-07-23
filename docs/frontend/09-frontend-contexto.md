@@ -90,6 +90,7 @@ O build atual do Next compila as rotas:
 /
 /juntarpdf
 /login
+/ordem-de-apresentacao
 /pdf-docx
 /transcrisao
 /_not-found
@@ -118,6 +119,8 @@ frontend/
       page.tsx
     login/
       page.tsx
+    ordem-de-apresentacao/
+      page.tsx
     pdf-docx/
       page.tsx
     transcrisao/
@@ -130,6 +133,7 @@ frontend/
     navbar.tsx
     pdf-docx-converter.tsx
     pdf-merge-workspace.tsx
+    presentation-order-workspace.tsx
     section-header.tsx
     theme-toggle.tsx
     tool-card.tsx
@@ -141,6 +145,8 @@ frontend/
   lib/
     api.ts
     backend-proxy.ts
+    presentation-order.ts
+    presentation-order.test.mjs
     utils.ts
   types/
     pdfjs-dist-webpack.d.ts
@@ -427,7 +433,8 @@ Estado atual:
 - Permite selecionar funcionalidades pela lista lateral.
 - Respeita prefers-reduced-motion.
 - Usa imagens do Unsplash agrupadas por categoria.
-- Mantém links reais para /pdf-docx, /juntarpdf e /transcrisao.
+- Mantém links reais para /pdf-docx, /juntarpdf, /ordem-de-apresentacao e
+  /transcrisao.
 ```
 
 ### Seções de ferramentas
@@ -459,7 +466,7 @@ Seção `Produtividade`:
 
 ```text
 - Sorteador
-- Ordem de apresentação
+- Ordem de apresentação -> href /ordem-de-apresentacao
 - Divisor de grupos
 - Gerador de QR Code
 ```
@@ -619,6 +626,7 @@ Implementado:
 - Carrossel animado com as 18 funcionalidades da home.
 - Rota /pdf-docx com fluxo visual de conversão.
 - Rota /juntarpdf para seleção, pré-visualização e ordenação local de PDFs.
+- Rota /ordem-de-apresentacao com sorteio local e exportação em TXT.
 - Rota /transcrisao integrada ao backend para upload, polling e download.
 - Login real por sessão Django, cookie HttpOnly e CSRF.
 - Identificação do usuário e logout no AppShell.
@@ -815,6 +823,7 @@ O build validado do Next inclui:
 /
 /juntarpdf
 /login
+/ordem-de-apresentacao
 /pdf-docx
 /transcrisao
 /api/auth/[...path]
@@ -884,4 +893,51 @@ Não há atualmente:
 - Geração de arquivo final.
 - Download do PDF mesclado.
 - Histórico de mesclagens.
+```
+
+## 15. Ordem de apresentação
+
+A ferramenta funcional está em:
+
+```text
+/ordem-de-apresentacao
+```
+
+Arquivos principais:
+
+```text
+frontend/app/ordem-de-apresentacao/page.tsx
+frontend/components/presentation-order-workspace.tsx
+frontend/lib/presentation-order.ts
+frontend/lib/presentation-order.test.mjs
+```
+
+O usuário informa uma pessoa ou equipe por linha. A normalização remove linhas
+vazias, espaços nas extremidades e espaços internos repetidos. Nomes duplicados são
+comparados sem diferenciar maiúsculas e minúsculas e bloqueiam o sorteio até serem
+corrigidos.
+
+A ordenação usa Fisher–Yates com `crypto.getRandomValues()` e rejeição de viés. Cada
+participante aparece exatamente uma vez na lista numerada. O resultado pode ser
+copiado ou baixado como `ordem-de-apresentacao.txt`.
+
+Um novo sorteio exige confirmação porque substitui a ordem visível. Alterar a entrada
+limpa o resultado anterior para evitar divergência entre participantes e resultado.
+
+Limites atuais:
+
+```text
+participantes        mínimo 2 e máximo 500
+caracteres por nome  120
+```
+
+Todo o processamento acontece no navegador, sem API, `localStorage` ou histórico. A
+interface anuncia resultados, downloads e erros em uma região `aria-live`.
+
+Validação:
+
+```bash
+docker compose run --rm frontend-check node lib/presentation-order.test.mjs
+docker compose run --rm frontend-check
+docker compose build frontend
 ```
