@@ -4,8 +4,8 @@ const backendBaseUrl = (
   "http://localhost:8000"
 ).replace(/\/$/, "")
 
-export async function proxyTranscriptionRequest(request: Request, path = "") {
-  const target = `${backendBaseUrl}/api/transcriptions/${path}`
+export async function proxyBackendRequest(request: Request, apiPath: string) {
+  const target = `${backendBaseUrl}/api/${apiPath.replace(/^\//, "")}`
   const headers = new Headers(request.headers)
   headers.delete("connection")
   headers.delete("host")
@@ -38,4 +38,8 @@ export async function proxyTranscriptionRequest(request: Request, path = "") {
       { status: 503 },
     )
   }
+}
+
+export function proxyTranscriptionRequest(request: Request, path = "") {
+  return proxyBackendRequest(request, `transcriptions/${path}`)
 }

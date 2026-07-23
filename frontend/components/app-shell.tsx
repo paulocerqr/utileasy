@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   AudioLines,
   Braces,
@@ -13,7 +13,9 @@ import {
   Gauge,
   LayoutGrid,
   Menu,
+  LogOut,
   PanelLeftOpen,
+  UserRound,
   X,
 } from "lucide-react"
 
@@ -72,9 +74,40 @@ function isToolActive(pathname: string, href: string) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [expandedFolders, setExpandedFolders] = useState<string[]>(["Arquivos", "Mídia e vídeo"])
+  const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null)
+  const [authLoaded, setAuthLoaded] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((user) => {
+        if (active) setCurrentUser(user)
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setAuthLoaded(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [pathname])
+
+  async function signOut() {
+    const csrfResponse = await fetch("/api/auth/csrf", { cache: "no-store" })
+    const csrfData = await csrfResponse.json()
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: { "X-CSRFToken": csrfData.csrf_token },
+    })
+    setCurrentUser(null)
+    router.push("/login")
+    router.refresh()
+  }
 
   function toggleFolder(label: string) {
     setExpandedFolders((current) =>
@@ -100,8 +133,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           <ThemeToggle />
-          <Link href="/login" className="hidden rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground sm:block">Entrar</Link>
-          <Link href="/login#criar-conta" className="hidden rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 sm:block">Criar conta</Link>
+          {authLoaded && currentUser ? (
+            <>
+              <span className="hidden items-center gap-2 rounded-md px-2 text-sm text-muted-foreground sm:flex">
+                <UserRound className="size-4" /> {currentUser.username}
+              </span>
+              <button
+                type="button"
+                onClick={signOut}
+                className="hidden items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground sm:flex"
+              >
+                <LogOut className="size-4" /> Sair
+              </button>
+            </>
+          ) : authLoaded ? (
+            <Link href="/login" className="hidden rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 sm:block">Entrar</Link>
+          ) : null}
           <button
             type="button"
             aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
