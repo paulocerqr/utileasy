@@ -12,6 +12,9 @@ import {
   Upload,
   X,
 } from "lucide-react"
+import Link from "next/link"
+
+import { TurnstileWidget } from "@/components/turnstile-widget"
 
 const acceptedFormats = ".mp3,.wav,.m4a,.aac,.ogg,.flac,.mp4,.mov,.mkv,.webm,.avi"
 const allowedExtensions = new Set(acceptedFormats.split(","))
@@ -36,8 +39,19 @@ interface TranscriptionJob {
   error_message: string
   created_at: string
   finished_at: string | null
-  reused: boolean
+  anonymous: boolean
+  expires_at: string | null
+  access_token?: string
 }
+
+interface AnonymousContext {
+  authenticated: boolean
+  captcha_enabled?: boolean
+  site_key?: string
+  expires_at?: string
+}
+
+const pendingAnonymousJobKey = "utileazy:pending-anonymous-job"
 
 const statusLabels: Record<Exclude<JobStatus, "completed" | "failed">, string> = {
   queued: "Aguardando na fila",
@@ -56,6 +70,17 @@ export function UploadArea() {
   const [error, setError] = useState("")
   const [copied, setCopied] = useState(false)
   const [pollAttempt, setPollAttempt] = useState(0)
+  const [anonymousContext, setAnonymousContext] = useState<AnonymousContext | null>(null)
+  const [captchaToken, setCaptchaToken] = useState("")
+  const [captchaGeneration, setCaptchaGeneration] = useState(0)
+  const [jobAccessToken, setJobAccessToken] = useState("")
+
+  useEffect(() => {
+    fetch("/api/anonymous/session", { cache: "no-store" })
+      .then((response) => readJsonResponse<AnonymousContext>(response))
+      .then(setAnonymousContext)
+      .catch(() => setError("Não foi possível iniciar a sessão de uso."))
+  }, [])
 
   const isProcessing = job && !["completed", "failed"].includes(job.status)
   const isBusy = isUploading || Boolean(isProcessing)
@@ -74,7 +99,7 @@ export function UploadArea() {
 
     const timeout = window.setTimeout(async () => {
       try {
-        const nextJob = await fetchTranscriptionJob(job.id)
+        const nextJob = await fetchTranscriptionJob(job.id, jobAccessToken)
         setJob(nextJob)
         setError(nextJob.status === "failed" ? nextJob.error_message : "")
       } catch (requestError) {
@@ -89,7 +114,7 @@ export function UploadArea() {
     }, pollIntervalMs)
 
     return () => window.clearTimeout(timeout)
-  }, [isProcessing, job?.id, pollAttempt])
+  }, [isProcessing, job?.id, jobAccessToken, pollAttempt])
 
   function selectFile(nextFile: File | null) {
     if (!nextFile) return
@@ -119,9 +144,28 @@ export function UploadArea() {
     try {
       const formData = new FormData()
       formData.append("file", file)
-      const response = await fetch("/api/transcriptions", { method: "POST", body: formData })
+      if (!anonymousContext?.authenticated) formData.append("captcha_token", captchaToken)
+      const csrfResponse = await fetch("/api/auth/csrf", { cache: "no-store" })
+      const csrfData = await csrfResponse.json().catch(() => null)
+      if (!csrfResponse.ok || !csrfData?.csrf_token) {
+        throw new Error("Não foi possível validar sua sessão. Entre novamente.")
+      }
+      const response = await fetch("/api/transcriptions", {
+        method: "POST",
+        headers: { "X-CSRFToken": csrfData.csrf_token },
+        body: formData,
+      })
       const data = await readJsonResponse<TranscriptionJob>(response)
       setJob(data)
+      if (data.access_token) {
+        setJobAccessToken(data.access_token)
+        sessionStorage.setItem(
+          pendingAnonymousJobKey,
+          JSON.stringify({ id: data.id, token: data.access_token }),
+        )
+      }
+      setCaptchaToken("")
+      setCaptchaGeneration((value) => value + 1)
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -144,9 +188,42 @@ export function UploadArea() {
     }
   }
 
+  async function downloadPdf() {
+    if (!job) return
+    try {
+      const headers = new Headers()
+      if (jobAccessToken) headers.set("X-Job-Token", jobAccessToken)
+      const response = await fetch(`/api/transcriptions/${job.id}/pdf`, { headers })
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.detail || "Não foi possível baixar o PDF.")
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement("a")
+      anchor.href = url
+      anchor.download = `transcricao-${job.id}.pdf`
+      anchor.click()
+      URL.revokeObjectURL(url)
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Não foi possível baixar o PDF.")
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-lg border-2 border-border/90 bg-card/40 p-6 shadow-2xl shadow-black/20 backdrop-blur-md md:p-8">
+        {anonymousContext && !anonymousContext.authenticated ? (
+          <div className="mb-5 rounded-lg border border-brand/50 bg-secondary/70 p-4 text-sm leading-6 text-foreground">
+            <p>
+              Você está no modo temporário. O resultado expira em 24 horas e não aparece em histórico.
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              <Link href="/login" className="font-medium text-brand-light hover:text-foreground">Entre</Link>{" "}
+              para preservar a transcrição e acessá-la em outros dispositivos.
+            </p>
+          </div>
+        ) : null}
         <input
           ref={inputRef}
           className="sr-only"
@@ -193,7 +270,14 @@ export function UploadArea() {
         <div className="mt-5 flex gap-3">
           <button
             type="button"
-            disabled={!file || isBusy}
+            disabled={
+              !file ||
+              isBusy ||
+              !anonymousContext ||
+              (!anonymousContext.authenticated &&
+                anonymousContext.captcha_enabled &&
+                !captchaToken)
+            }
             onClick={startTranscription}
             className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
           >
@@ -215,6 +299,26 @@ export function UploadArea() {
             </button>
           ) : null}
         </div>
+
+        {anonymousContext && !anonymousContext.authenticated ? (
+          <div className="mt-5 rounded-lg border border-border bg-card/60 p-3">
+            {anonymousContext.captcha_enabled && anonymousContext.site_key ? (
+              <TurnstileWidget
+                key={captchaGeneration}
+                siteKey={anonymousContext.site_key}
+                onToken={setCaptchaToken}
+              />
+            ) : anonymousContext.captcha_enabled ? (
+              <p className="text-center text-sm text-warning-foreground">
+                O CAPTCHA ainda não foi configurado pelo administrador.
+              </p>
+            ) : (
+              <p className="text-center text-xs text-muted-foreground">
+                CAPTCHA desativado neste ambiente de desenvolvimento.
+              </p>
+            )}
+          </div>
+        ) : null}
 
         {isProcessing ? (
           <div className="mt-4 rounded-lg border border-border bg-secondary/50 p-4">
@@ -249,7 +353,7 @@ export function UploadArea() {
                   <CheckCircle2 className="h-4 w-4" /> Transcrição concluída
                 </h2>
                 <p className="mt-1 max-w-xl break-words text-sm text-muted-foreground">
-                  {job.original_filename} · {wordCount} palavras{job.reused ? " · resultado reutilizado" : ""}
+                  {job.original_filename} · {wordCount} palavras
                 </p>
               </div>
             </div>
@@ -262,25 +366,33 @@ export function UploadArea() {
                 {copied ? <CheckCircle2 className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
                 {copied ? "Copiado" : "Copiar"}
               </button>
-              <a
-                href={`/api/transcriptions/${job.id}/pdf`}
+              <button
+                type="button"
+                onClick={downloadPdf}
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
               >
                 <Download className="h-4 w-4" /> Baixar PDF
-              </a>
+              </button>
             </div>
           </div>
           <p className="max-h-[34rem] overflow-auto whitespace-pre-wrap break-words p-5 text-sm leading-7 text-foreground md:text-base">
             {job.transcript_text}
           </p>
+          {job.anonymous ? (
+            <div className="border-t border-border p-4 text-center text-sm text-muted-foreground">
+              Este resultado é temporário. <Link href="/login" className="font-medium text-brand-light">Entre agora para salvá-lo.</Link>
+            </div>
+          ) : null}
         </section>
       ) : null}
     </div>
   )
 }
 
-async function fetchTranscriptionJob(id: string): Promise<TranscriptionJob> {
-  const response = await fetch(`/api/transcriptions/${id}`, { cache: "no-store" })
+async function fetchTranscriptionJob(id: string, accessToken = ""): Promise<TranscriptionJob> {
+  const headers = new Headers()
+  if (accessToken) headers.set("X-Job-Token", accessToken)
+  const response = await fetch(`/api/transcriptions/${id}`, { cache: "no-store", headers })
   return readJsonResponse<TranscriptionJob>(response)
 }
 
