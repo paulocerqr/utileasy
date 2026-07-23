@@ -87,6 +87,7 @@ export function ProductivitySection() {
           icon={ListOrdered}
           title="Ordem de apresentação"
           description="Organize a ordem de apresentações em equipe rapidamente."
+          href="/ordem-de-apresentacao"
         />
         <ToolCard
           icon={Users}

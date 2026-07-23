@@ -44,7 +44,7 @@ const domains = [
     icon: Gauge,
     tools: [
       { label: "Sorteador", href: "/#feature-carousel" },
-      { label: "Ordem de apresentação", href: "/#feature-carousel" },
+      { label: "Ordem de apresentação", href: "/ordem-de-apresentacao" },
       { label: "Divisor de grupos", href: "/#feature-carousel" },
       { label: "Gerador de QR Code", href: "/#feature-carousel" },
     ],
