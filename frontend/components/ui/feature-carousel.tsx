@@ -121,7 +121,9 @@ const FEATURES: Feature[] = [
         "sorteador",
         "Sorteador",
         Shuffle,
-        "Sorteie nomes, números ou grupos de forma aleatória.",
+        "Sorteie números ou itens de uma lista sem repetições.",
+        "/sorteador",
+        "Abrir ferramenta",
       ],
       [
         "ordem-apresentacao",
