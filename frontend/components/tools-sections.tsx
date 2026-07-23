@@ -99,7 +99,8 @@ export function ProductivitySection() {
         <ToolCard
           icon={QrCode}
           title="Gerador de QR Code"
-          description="Crie QR codes para links, Wi-Fi, contatos e muito mais."
+          description="Crie QR codes para links e acesso a redes Wi-Fi."
+          href="/qr-code"
         />
       </div>
     </section>
