@@ -5,6 +5,8 @@
 **Complexidade:** Baixa/Média  
 **Prioridade sugerida:** Etapa 1
 
+**Estado:** Implementada
+
 ## Descrição da tarefa
 
 Criar uma ferramenta que distribua participantes aleatoriamente em grupos
@@ -35,13 +37,12 @@ Nenhum.
 
 ## Critérios de aceitação
 
-- [ ] Cada participante aparece em exatamente um grupo.
-- [ ] Nenhum participante é perdido ou duplicado.
-- [ ] No modo por quantidade, a diferença entre grupos é no máximo uma pessoa.
-- [ ] No modo por tamanho, nenhum grupo excede o tamanho configurado.
-- [ ] Quantidades impossíveis ou inválidas geram mensagem clara.
-- [ ] O usuário pode refazer, copiar tudo ou copiar um grupo.
-- [ ] Os nomes não saem do navegador.
-- [ ] A interface funciona em telas móveis.
-- [ ] Testes cobrem divisões exatas, restos e limites.
-
+- [x] Cada participante aparece em exatamente um grupo.
+- [x] Nenhum participante é perdido ou duplicado.
+- [x] No modo por quantidade, a diferença entre grupos é no máximo uma pessoa.
+- [x] No modo por tamanho, nenhum grupo excede o tamanho configurado.
+- [x] Quantidades impossíveis ou inválidas geram mensagem clara.
+- [x] O usuário pode refazer, copiar tudo ou copiar um grupo.
+- [x] Os nomes não saem do navegador.
+- [x] A interface funciona em telas móveis.
+- [x] Testes cobrem divisões exatas, restos e limites.

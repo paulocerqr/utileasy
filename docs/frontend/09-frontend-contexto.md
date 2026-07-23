@@ -88,10 +88,12 @@ O build atual do Next compila as rotas:
 
 ```text
 /
+/divisor-de-grupos
 /juntarpdf
 /login
 /ordem-de-apresentacao
 /pdf-docx
+/sorteador
 /transcrisao
 /_not-found
 /api/auth/[...path]
@@ -115,6 +117,8 @@ frontend/
     layout.tsx
     page.tsx
     globals.css
+    divisor-de-grupos/
+      page.tsx
     juntarpdf/
       page.tsx
     login/
@@ -123,6 +127,8 @@ frontend/
       page.tsx
     pdf-docx/
       page.tsx
+    sorteador/
+      page.tsx
     transcrisao/
       page.tsx
   components/
@@ -130,10 +136,12 @@ frontend/
     backend-status.tsx
     dev-section.tsx
     hero.tsx
+    group-divider-workspace.tsx
     navbar.tsx
     pdf-docx-converter.tsx
     pdf-merge-workspace.tsx
     presentation-order-workspace.tsx
+    random-draw-workspace.tsx
     section-header.tsx
     theme-toggle.tsx
     tool-card.tsx
@@ -145,8 +153,12 @@ frontend/
   lib/
     api.ts
     backend-proxy.ts
+    group-divider.ts
+    group-divider.test.mjs
     presentation-order.ts
     presentation-order.test.mjs
+    sorteador.ts
+    sorteador.test.ts
     utils.ts
   types/
     pdfjs-dist-webpack.d.ts
@@ -433,8 +445,8 @@ Estado atual:
 - Permite selecionar funcionalidades pela lista lateral.
 - Respeita prefers-reduced-motion.
 - Usa imagens do Unsplash agrupadas por categoria.
-- Mantém links reais para /pdf-docx, /juntarpdf, /ordem-de-apresentacao e
-  /transcrisao.
+- Mantém links reais para /pdf-docx, /juntarpdf, /sorteador,
+  /ordem-de-apresentacao, /divisor-de-grupos e /transcrisao.
 ```
 
 ### Seções de ferramentas
@@ -465,9 +477,9 @@ O card de YouTube tem badge `USO RESPONSÁVEL` e aviso sobre direitos autorais.
 Seção `Produtividade`:
 
 ```text
-- Sorteador
+- Sorteador -> href /sorteador
 - Ordem de apresentação -> href /ordem-de-apresentacao
-- Divisor de grupos
+- Divisor de grupos -> href /divisor-de-grupos
 - Gerador de QR Code
 ```
 
@@ -626,7 +638,9 @@ Implementado:
 - Carrossel animado com as 18 funcionalidades da home.
 - Rota /pdf-docx com fluxo visual de conversão.
 - Rota /juntarpdf para seleção, pré-visualização e ordenação local de PDFs.
+- Rota /sorteador com sorteio local de números e itens sem repetição.
 - Rota /ordem-de-apresentacao com sorteio local e exportação em TXT.
+- Rota /divisor-de-grupos com divisão local, balanceada e copiável.
 - Rota /transcrisao integrada ao backend para upload, polling e download.
 - Login real por sessão Django, cookie HttpOnly e CSRF.
 - Identificação do usuário e logout no AppShell.
@@ -821,10 +835,12 @@ O build validado do Next inclui:
 
 ```text
 /
+/divisor-de-grupos
 /juntarpdf
 /login
 /ordem-de-apresentacao
 /pdf-docx
+/sorteador
 /transcrisao
 /api/auth/[...path]
 /api/anonymous/[...path]
@@ -938,6 +954,62 @@ Validação:
 
 ```bash
 docker compose run --rm frontend-check node lib/presentation-order.test.mjs
+docker compose run --rm frontend-check
+docker compose build frontend
+```
+
+## 16. Divisor de grupos
+
+A ferramenta funcional está em:
+
+```text
+/divisor-de-grupos
+```
+
+Arquivos principais:
+
+```text
+frontend/app/divisor-de-grupos/page.tsx
+frontend/components/group-divider-workspace.tsx
+frontend/lib/group-divider.ts
+frontend/lib/group-divider.test.mjs
+```
+
+O usuário informa um participante por linha. Linhas vazias e espaços extras são
+normalizados; nomes repetidos, sem diferenciar maiúsculas e minúsculas, bloqueiam a
+divisão até serem corrigidos.
+
+Modos disponíveis:
+
+```text
+quantidade de grupos   cria exatamente a quantidade solicitada
+tamanho máximo         calcula quantos grupos são necessários para respeitar o limite
+```
+
+Depois de embaralhar com Fisher–Yates e `crypto.getRandomValues()`, a distribuição
+round-robin mantém a diferença entre grupos em no máximo uma pessoa. No modo por
+tamanho, nenhum grupo ultrapassa o valor configurado.
+
+O usuário pode renomear cada grupo, refazer a divisão após confirmação, copiar um
+grupo ou copiar todos. Nomes vazios de grupos retornam ao padrão quando o campo perde
+o foco.
+
+Limites atuais:
+
+```text
+participantes          mínimo 2 e máximo 500
+caracteres por nome    120
+caracteres por grupo   60
+grupos                 mínimo 2 e sem grupos vazios
+```
+
+Todo o processamento acontece no navegador, sem API, `localStorage` ou histórico. A
+interface anuncia criação, cópia e erros em uma região `aria-live`.
+
+Validação:
+
+```bash
+docker compose run --rm frontend-check pnpm test
 docker compose run --rm frontend-check
 docker compose build frontend
 ```
