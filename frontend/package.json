@@ -2,11 +2,13 @@
   "name": "utilitydev-frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "node lib/sorteador.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

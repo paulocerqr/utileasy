@@ -91,6 +91,7 @@ O build atual do Next compila as rotas:
 /juntarpdf
 /login
 /pdf-docx
+/sorteador
 /transcrisao
 /_not-found
 /api/auth/[...path]
@@ -120,6 +121,8 @@ frontend/
       page.tsx
     pdf-docx/
       page.tsx
+    sorteador/
+      page.tsx
     transcrisao/
       page.tsx
   components/
@@ -130,6 +133,7 @@ frontend/
     navbar.tsx
     pdf-docx-converter.tsx
     pdf-merge-workspace.tsx
+    random-draw-workspace.tsx
     section-header.tsx
     theme-toggle.tsx
     tool-card.tsx
@@ -141,6 +145,8 @@ frontend/
   lib/
     api.ts
     backend-proxy.ts
+    sorteador.ts
+    sorteador.test.ts
     utils.ts
   types/
     pdfjs-dist-webpack.d.ts
@@ -427,7 +433,7 @@ Estado atual:
 - Permite selecionar funcionalidades pela lista lateral.
 - Respeita prefers-reduced-motion.
 - Usa imagens do Unsplash agrupadas por categoria.
-- Mantém links reais para /pdf-docx, /juntarpdf e /transcrisao.
+- Mantém links reais para /pdf-docx, /juntarpdf, /sorteador e /transcrisao.
 ```
 
 ### Seções de ferramentas
@@ -458,7 +464,7 @@ O card de YouTube tem badge `USO RESPONSÁVEL` e aviso sobre direitos autorais.
 Seção `Produtividade`:
 
 ```text
-- Sorteador
+- Sorteador -> href /sorteador
 - Ordem de apresentação
 - Divisor de grupos
 - Gerador de QR Code
@@ -619,6 +625,7 @@ Implementado:
 - Carrossel animado com as 18 funcionalidades da home.
 - Rota /pdf-docx com fluxo visual de conversão.
 - Rota /juntarpdf para seleção, pré-visualização e ordenação local de PDFs.
+- Rota /sorteador com sorteio local de números e itens sem repetição.
 - Rota /transcrisao integrada ao backend para upload, polling e download.
 - Login real por sessão Django, cookie HttpOnly e CSRF.
 - Identificação do usuário e logout no AppShell.
@@ -816,6 +823,7 @@ O build validado do Next inclui:
 /juntarpdf
 /login
 /pdf-docx
+/sorteador
 /transcrisao
 /api/auth/[...path]
 /api/anonymous/[...path]
@@ -884,4 +892,58 @@ Não há atualmente:
 - Geração de arquivo final.
 - Download do PDF mesclado.
 - Histórico de mesclagens.
+```
+
+## 15. Sorteador de números e itens
+
+A ferramenta funcional está em:
+
+```text
+/sorteador
+```
+
+Arquivos principais:
+
+```text
+frontend/app/sorteador/page.tsx
+frontend/components/random-draw-workspace.tsx
+frontend/lib/sorteador.ts
+frontend/lib/sorteador.test.ts
+```
+
+O sorteador oferece dois modos:
+
+```text
+números  intervalo inclusivo, um ou vários resultados sem repetição
+itens    uma entrada por linha, com remoção opcional de duplicados
+```
+
+Todo o processamento acontece no navegador. A ferramenta não chama API, não usa
+`localStorage` e não persiste entradas ou resultados. A fonte aleatória é
+`crypto.getRandomValues()` com rejeição da faixa enviesada; a seleção sem repetição
+usa uma variação parcial de Fisher–Yates com memória proporcional à quantidade
+sorteada.
+
+Limites atuais:
+
+```text
+intervalo numérico   1.000.000 de números
+resultados por vez   1.000
+itens na lista       10.000
+caracteres por item  200
+```
+
+Linhas vazias são ignoradas. Com a remoção de duplicados desativada, linhas iguais
+são consideradas entradas distintas, embora possam produzir textos visualmente
+iguais no resultado.
+
+A interface permite sortear novamente, reiniciar, copiar o resultado e alternar os
+modos. Mensagens de sucesso e erro são anunciadas em uma região `aria-live`.
+
+Validação:
+
+```bash
+docker compose run --rm frontend-check pnpm test
+docker compose run --rm frontend-check
+docker compose build frontend
 ```

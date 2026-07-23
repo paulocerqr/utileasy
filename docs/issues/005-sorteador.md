@@ -5,6 +5,8 @@
 **Complexidade:** Baixa  
 **Prioridade sugerida:** Etapa 1
 
+**Estado:** Implementada
+
 ## Descrição da tarefa
 
 Criar uma ferramenta para sortear números ou itens de uma lista, com validação,
@@ -33,13 +35,12 @@ Nenhum. A ferramenta funciona integralmente no navegador, sem API, banco ou stor
 
 ## Critérios de aceitação
 
-- [ ] Um número é sorteado dentro do intervalo inclusivo informado.
-- [ ] Intervalos inválidos ou excessivos são rejeitados com mensagem clara.
-- [ ] Itens vazios são ignorados.
-- [ ] O sorteio sem repetição nunca retorna o mesmo índice duas vezes.
-- [ ] A quantidade solicitada não pode exceder os itens disponíveis.
-- [ ] O resultado pode ser copiado.
-- [ ] Nenhum dado é enviado pela rede ou persistido.
-- [ ] A interface funciona por teclado e anuncia o resultado para leitores de tela.
-- [ ] Testes cobrem limites numéricos, duplicados, quantidade e ausência de repetição.
-
+- [x] Um número é sorteado dentro do intervalo inclusivo informado.
+- [x] Intervalos inválidos ou excessivos são rejeitados com mensagem clara.
+- [x] Itens vazios são ignorados.
+- [x] O sorteio sem repetição nunca retorna o mesmo índice duas vezes.
+- [x] A quantidade solicitada não pode exceder os itens disponíveis.
+- [x] O resultado pode ser copiado.
+- [x] Nenhum dado é enviado pela rede ou persistido.
+- [x] A interface funciona por teclado e anuncia o resultado para leitores de tela.
+- [x] Testes cobrem limites numéricos, duplicados, quantidade e ausência de repetição.
