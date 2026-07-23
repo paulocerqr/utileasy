@@ -37,7 +37,7 @@ def build_transcription_pdf(transcription):
         spaceAfter=8,
     )
 
-    text = escape(transcription.effective_transcription.texto_transcricao).replace("\n", "<br/>")
+    text = escape(transcription.effective_text).replace("\n", "<br/>")
     completed_at = transcription.finalizado_em or transcription.criado_em
     story = [
         Paragraph("Transcrição", title_style),

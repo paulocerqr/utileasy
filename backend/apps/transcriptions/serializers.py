@@ -10,7 +10,8 @@ class TranscricaoSerializer(serializers.ModelSerializer):
     error_message = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source="criado_em", read_only=True)
     finished_at = serializers.DateTimeField(source="finalizado_em", read_only=True)
-    reused = serializers.SerializerMethodField()
+    anonymous = serializers.SerializerMethodField()
+    expires_at = serializers.DateTimeField(source="expira_em", read_only=True)
 
     class Meta:
         model = Transcricao
@@ -22,16 +23,15 @@ class TranscricaoSerializer(serializers.ModelSerializer):
             "error_message",
             "created_at",
             "finished_at",
-            "reused",
+            "anonymous",
+            "expires_at",
         ]
 
     def get_transcript_text(self, instance):
-        effective = instance.effective_transcription
-        return effective.texto_transcricao if instance.status == Transcricao.Status.COMPLETED else ""
+        return instance.effective_text if instance.status == Transcricao.Status.COMPLETED else ""
 
     def get_error_message(self, instance):
-        effective = instance.effective_transcription
-        return effective.error_message if instance.status == Transcricao.Status.FAILED else ""
+        return instance.effective_error if instance.status == Transcricao.Status.FAILED else ""
 
-    def get_reused(self, instance):
-        return instance.duplicate_of_id is not None
+    def get_anonymous(self, instance):
+        return instance.anonymous_session_id is not None
