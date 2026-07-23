@@ -39,16 +39,25 @@ class AssemblyAIClient:
         except (requests.RequestException, KeyError, ValueError) as exc:
             raise AssemblyAIError("Falha ao enviar o áudio para a AssemblyAI.") from exc
 
-    def submit_transcription(self, upload_url):
+    def submit_transcription(self, upload_url, webhook_url=None, webhook_secret=None):
+        payload = {
+            "audio_url": upload_url,
+            "language_code": "pt",
+            "format_text": True,
+        }
+        if webhook_url:
+            payload.update(
+                {
+                    "webhook_url": webhook_url,
+                    "webhook_auth_header_name": "X-AssemblyAI-Webhook-Secret",
+                    "webhook_auth_header_value": webhook_secret,
+                }
+            )
         try:
             response = requests.post(
                 f"{self.base_url}/transcript",
                 headers={**self.headers, "content-type": "application/json"},
-                json={
-                    "audio_url": upload_url,
-                    "language_code": "pt",
-                    "format_text": True,
-                },
+                json=payload,
                 timeout=(15, 60),
             )
             response.raise_for_status()
