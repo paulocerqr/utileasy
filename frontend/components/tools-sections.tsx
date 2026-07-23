@@ -94,6 +94,7 @@ export function ProductivitySection() {
           icon={Users}
           title="Divisor de grupos"
           description="Separe pessoas em equipes equilibradas em poucos cliques."
+          href="/divisor-de-grupos"
         />
         <ToolCard
           icon={QrCode}

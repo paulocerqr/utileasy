@@ -138,6 +138,8 @@ const FEATURES: Feature[] = [
         "Divisor de grupos",
         Users,
         "Separe pessoas em equipes equilibradas em poucos cliques.",
+        "/divisor-de-grupos",
+        "Abrir ferramenta",
       ],
       [
         "qr-code",
