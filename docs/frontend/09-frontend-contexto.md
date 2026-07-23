@@ -17,6 +17,8 @@ lucide-react para ícones
 class-variance-authority, clsx e tailwind-merge disponíveis
 motion para animações do carrossel da home
 pdfjs-dist para pré-visualização local da primeira página de PDFs
+qrcode para gerar QR Codes em PNG e SVG no navegador
+jsQR somente nos testes para decodificar amostras geradas
 
 Package manager:
 pnpm 10.24.0
@@ -29,6 +31,7 @@ pnpm dev
 pnpm build
 pnpm start
 pnpm lint
+pnpm test
 ```
 
 O script `pnpm lint` roda:
@@ -93,6 +96,7 @@ O build atual do Next compila as rotas:
 /login
 /ordem-de-apresentacao
 /pdf-docx
+/qr-code
 /sorteador
 /transcrisao
 /_not-found
@@ -127,6 +131,8 @@ frontend/
       page.tsx
     pdf-docx/
       page.tsx
+    qr-code/
+      page.tsx
     sorteador/
       page.tsx
     transcrisao/
@@ -141,6 +147,7 @@ frontend/
     pdf-docx-converter.tsx
     pdf-merge-workspace.tsx
     presentation-order-workspace.tsx
+    qr-code-generator.tsx
     random-draw-workspace.tsx
     section-header.tsx
     theme-toggle.tsx
@@ -157,6 +164,8 @@ frontend/
     group-divider.test.mjs
     presentation-order.ts
     presentation-order.test.mjs
+    qr-code.ts
+    qr-code.test.mjs
     sorteador.ts
     sorteador.test.ts
     utils.ts
@@ -446,7 +455,7 @@ Estado atual:
 - Respeita prefers-reduced-motion.
 - Usa imagens do Unsplash agrupadas por categoria.
 - Mantém links reais para /pdf-docx, /juntarpdf, /sorteador,
-  /ordem-de-apresentacao, /divisor-de-grupos e /transcrisao.
+  /ordem-de-apresentacao, /divisor-de-grupos, /qr-code e /transcrisao.
 ```
 
 ### Seções de ferramentas
@@ -480,7 +489,7 @@ Seção `Produtividade`:
 - Sorteador -> href /sorteador
 - Ordem de apresentação -> href /ordem-de-apresentacao
 - Divisor de grupos -> href /divisor-de-grupos
-- Gerador de QR Code
+- Gerador de QR Code -> href /qr-code
 ```
 
 ### Seção Para Desenvolvedores
@@ -641,6 +650,7 @@ Implementado:
 - Rota /sorteador com sorteio local de números e itens sem repetição.
 - Rota /ordem-de-apresentacao com sorteio local e exportação em TXT.
 - Rota /divisor-de-grupos com divisão local, balanceada e copiável.
+- Rota /qr-code com geração local para URL e Wi-Fi.
 - Rota /transcrisao integrada ao backend para upload, polling e download.
 - Login real por sessão Django, cookie HttpOnly e CSRF.
 - Identificação do usuário e logout no AppShell.
@@ -670,6 +680,7 @@ Ainda não implementado:
 ```text
 - Preservar a rota /transcrisao enquanto ela estiver linkada na home.
 - Preservar a rota /juntarpdf, que está linkada no AppShell, nos cards e no carrossel.
+- Preservar a rota /qr-code, que está linkada no AppShell, nos cards e no carrossel.
 - Não implementar a mesclagem de PDFs até ser decidido se o processamento ficará no backend ou no frontend.
 - Em /juntarpdf, pdfjs-dist é usado somente para renderizar a primeira página; não confundir pré-visualização com processamento.
 - Manter o limite acumulado de 100 MB na preparação da mesclagem.
@@ -840,6 +851,7 @@ O build validado do Next inclui:
 /login
 /ordem-de-apresentacao
 /pdf-docx
+/qr-code
 /sorteador
 /transcrisao
 /api/auth/[...path]
@@ -1005,6 +1017,61 @@ grupos                 mínimo 2 e sem grupos vazios
 
 Todo o processamento acontece no navegador, sem API, `localStorage` ou histórico. A
 interface anuncia criação, cópia e erros em uma região `aria-live`.
+
+Validação:
+
+```bash
+docker compose run --rm frontend-check pnpm test
+docker compose run --rm frontend-check
+docker compose build frontend
+```
+
+## 17. Gerador de QR Code
+
+A ferramenta funcional está em:
+
+```text
+/qr-code
+```
+
+Arquivos principais:
+
+```text
+frontend/app/qr-code/page.tsx
+frontend/components/qr-code-generator.tsx
+frontend/lib/qr-code.ts
+frontend/lib/qr-code.test.mjs
+```
+
+Tipos de conteúdo disponíveis:
+
+```text
+URL HTTP ou HTTPS
+Wi-Fi com SSID, segurança, senha e indicador de rede oculta
+```
+
+Os payloads Wi-Fi escapam barra invertida, ponto e vírgula, vírgula, dois-pontos e
+aspas. URLs com protocolos diferentes de HTTP(S) e conteúdos vazios ou maiores que
+1.200 bytes são rejeitados antes da geração.
+
+Padrão fixo de saída:
+
+```text
+tamanho              384 pixels
+margem                4 módulos
+correção de erro      M
+cores                 #111827 sobre #ffffff
+downloads             PNG e SVG
+```
+
+Todo o processamento usa `qrcode` diretamente no navegador. O conteúdo não é
+executado, aberto, enviado à API, salvo em `localStorage` ou persistido pelo
+Utileazy. A prévia SVG não usa HTML injetado; somente a versão PNG é exibida como
+imagem, e o SVG é mantido como texto até o download.
+
+Os testes criam matrizes QR reais e usam `jsQR` para decodificar amostras de URL e
+Wi-Fi, comparando o resultado com o payload original. Também cobrem protocolos,
+escapes, limite de conteúdo, campos obrigatórios e os downloads no padrão fixo.
 
 Validação:
 

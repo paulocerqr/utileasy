@@ -46,7 +46,7 @@ const domains = [
       { label: "Sorteador", href: "/sorteador" },
       { label: "Ordem de apresentação", href: "/ordem-de-apresentacao" },
       { label: "Divisor de grupos", href: "/divisor-de-grupos" },
-      { label: "Gerador de QR Code", href: "/#feature-carousel" },
+      { label: "Gerador de QR Code", href: "/qr-code" },
     ],
   },
   {
