@@ -17,6 +17,7 @@ lucide-react para ícones
 class-variance-authority, clsx e tailwind-merge disponíveis
 motion para animações do carrossel da home
 pdfjs-dist para pré-visualização local da primeira página de PDFs
+pdf-lib para mesclar PDFs localmente no navegador
 qrcode para gerar QR Codes em PNG e SVG no navegador
 jsQR somente nos testes para decodificar amostras geradas
 
@@ -162,6 +163,8 @@ frontend/
     backend-proxy.ts
     group-divider.ts
     group-divider.test.mjs
+    pdf-merge.ts
+    pdf-merge.test.mjs
     presentation-order.ts
     presentation-order.test.mjs
     qr-code.ts
@@ -470,7 +473,7 @@ Seção `Ferramentas de Arquivos`:
 
 ```text
 - Conversão PDF ↔ DOCX -> href /pdf-docx
-- Juntar e separar PDFs -> href /juntarpdf
+- Juntar PDFs -> href /juntarpdf
 - Imagens para PDF
 ```
 
@@ -646,7 +649,7 @@ Implementado:
 - Home visual completa com seções e cards.
 - Carrossel animado com as 18 funcionalidades da home.
 - Rota /pdf-docx com fluxo visual de conversão.
-- Rota /juntarpdf para seleção, pré-visualização e ordenação local de PDFs.
+- Rota /juntarpdf para seleção, pré-visualização, ordenação e mesclagem local de PDFs.
 - Rota /sorteador com sorteio local de números e itens sem repetição.
 - Rota /ordem-de-apresentacao com sorteio local e exportação em TXT.
 - Rota /divisor-de-grupos com divisão local, balanceada e copiável.
@@ -669,9 +672,6 @@ Ainda não implementado:
 - Cadastro público; usuários são criados pelo administrador Django.
 - Tela visual de histórico; o endpoint autenticado já existe no backend.
 - Guia de uso funcional.
-- Mesclagem real dos PDFs selecionados em /juntarpdf.
-- Envio dos PDFs de /juntarpdf para o backend.
-- Download do PDF mesclado.
 - Rotas reais para a maioria dos cards da home.
 ```
 
@@ -681,9 +681,8 @@ Ainda não implementado:
 - Preservar a rota /transcrisao enquanto ela estiver linkada na home.
 - Preservar a rota /juntarpdf, que está linkada no AppShell, nos cards e no carrossel.
 - Preservar a rota /qr-code, que está linkada no AppShell, nos cards e no carrossel.
-- Não implementar a mesclagem de PDFs até ser decidido se o processamento ficará no backend ou no frontend.
-- Em /juntarpdf, pdfjs-dist é usado somente para renderizar a primeira página; não confundir pré-visualização com processamento.
-- Manter o limite acumulado de 100 MB na preparação da mesclagem.
+- Em /juntarpdf, pdfjs-dist renderiza a prévia e pdf-lib realiza a mesclagem.
+- Manter o limite acumulado de 100 MB e o aviso sobre consumo de memória em celulares.
 - Usar tokens de tema em vez de hexadecimais diretos sempre que possível.
 - Verificar contraste nos dois temas, principalmente sobre imagens claras.
 - Para textos sobre imagem, preferir card/superfície com bg-card/90 e border-border.
@@ -862,9 +861,9 @@ O build validado do Next inclui:
 /_not-found
 ```
 
-## 14. Preparação para juntar PDFs
+## 14. Juntar PDFs
 
-A rota de preparação é:
+A ferramenta funcional está em:
 
 ```text
 /juntarpdf
@@ -875,6 +874,8 @@ Arquivos principais:
 ```text
 frontend/app/juntarpdf/page.tsx
 frontend/components/pdf-merge-workspace.tsx
+frontend/lib/pdf-merge.ts
+frontend/lib/pdf-merge.test.mjs
 frontend/types/pdfjs-dist-webpack.d.ts
 ```
 
@@ -888,8 +889,11 @@ O protótipo de referência criado no Google Stitch fica em `JuntarPDF/`, com `D
 3. PDF.js renderiza localmente a primeira página de cada arquivo em um canvas.
 4. Usuário arrasta os cards para reordenar ou usa os botões direcionais.
 5. Usuário pode remover um PDF pelo card ou pelo resumo lateral.
-6. O painel Options permite adicionar mais arquivos e configurar a confirmação antes da remoção.
+6. O painel Opções permite adicionar mais arquivos e configurar a confirmação antes da remoção.
 7. O resumo lateral e o contador de tamanho acompanham a ordem e o total atuais.
+8. O usuário inicia a mesclagem explicitamente; os controles ficam bloqueados durante o trabalho.
+9. pdf-lib copia todas as páginas na ordem visual e informa o progresso por arquivo.
+10. O navegador baixa `utileazy-pdfs-unidos.pdf` e revoga a URL temporária.
 ```
 
 O painel de opções contém:
@@ -901,26 +905,42 @@ O painel de opções contém:
 - Barra visual de progresso do limite.
 - Instruções de reordenação.
 - Resumo ordenado com ação de remoção.
+- Progresso da mesclagem e confirmação do download.
 ```
 
 ### Pré-visualização
 
 A dependência `pdfjs-dist` é carregada no cliente por `pdfjs-dist/webpack.mjs`. O worker é empacotado pelo build do Next. A declaração local em `frontend/types/pdfjs-dist-webpack.d.ts` fornece os tipos para esse subpath.
 
-Os arquivos permanecem como objetos `File` na memória do navegador. A pré-visualização não envia dados para o backend e não persiste a lista após recarregar a página.
+Os arquivos permanecem como objetos `File` na memória do navegador. A pré-visualização
+não envia dados para o backend e não persiste a lista após recarregar a página. A
+tarefa do PDF.js é destruída depois de renderizar cada primeira página.
 
-### Limitação deliberada
+### Mesclagem local
 
-A mesclagem ainda não foi implementada. O botão `Juntar PDFs` é habilitado quando há pelo menos dois arquivos, mas apenas informa que a ordenação está pronta e que a integração depende da decisão entre backend e frontend.
+`frontend/lib/pdf-merge.ts` valida no mínimo dois documentos e no máximo 100 MB,
+carrega cada arquivo com `PDFDocument.load`, copia todas as páginas com `copyPages` e
+serializa o resultado com `save`. O arquivo final preserva primeiro a ordem dos
+arquivos e depois a ordem interna de suas páginas.
 
-Não há atualmente:
+PDFs protegidos por senha, corrompidos, vazios ou estruturalmente inválidos são
+rejeitados com uma mensagem que identifica o arquivo. O botão não permite duas
+execuções simultâneas, e a interface bloqueia adição, remoção e reordenação durante o
+processamento.
+
+Os bytes intermediários e documentos do `pdf-lib` ficam restritos ao escopo da
+operação e são liberados pelo coletor de lixo depois dela. A URL de `Blob` usada no
+download é revogada após o clique. Nenhum `fetch`, endpoint, storage ou histórico
+participa desse fluxo.
+
+Testes:
 
 ```text
-- Biblioteca de mesclagem de PDFs.
-- Endpoint de upload ou mesclagem para essa rota.
-- Geração de arquivo final.
-- Download do PDF mesclado.
-- Histórico de mesclagens.
+- preservação da ordem dos arquivos e de todas as páginas
+- inversão da ordem visual
+- mínimo de arquivos e limite acumulado
+- PDF inválido com identificação do nome
+- mensagem específica para PDF protegido
 ```
 
 ## 15. Ordem de apresentação
