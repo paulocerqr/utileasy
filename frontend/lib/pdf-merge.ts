@@ -31,6 +31,41 @@ export class PdfMergeValidationError extends Error {
   }
 }
 
+let fallbackIdSequence = 0
+
+export function createPdfItemId(
+  randomSource: Crypto | undefined = globalThis.crypto,
+) {
+  if (typeof randomSource?.randomUUID === "function") {
+    return randomSource.randomUUID()
+  }
+
+  if (typeof randomSource?.getRandomValues === "function") {
+    const bytes = randomSource.getRandomValues(new Uint8Array(16))
+    bytes[6] = (bytes[6] & 0x0f) | 0x40
+    bytes[8] = (bytes[8] & 0x3f) | 0x80
+    const hex = Array.from(bytes, (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    )
+
+    return [
+      hex.slice(0, 4).join(""),
+      hex.slice(4, 6).join(""),
+      hex.slice(6, 8).join(""),
+      hex.slice(8, 10).join(""),
+      hex.slice(10, 16).join(""),
+    ].join("-")
+  }
+
+  fallbackIdSequence += 1
+  return [
+    "pdf",
+    Date.now().toString(36),
+    fallbackIdSequence.toString(36),
+    Math.random().toString(36).slice(2),
+  ].join("-")
+}
+
 export function validatePdfMergeSources(
   sources: readonly Pick<PdfMergeSource, "name" | "size">[],
 ) {

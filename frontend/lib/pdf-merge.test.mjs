@@ -6,10 +6,31 @@ import { EncryptedPDFError, PDFDocument } from "pdf-lib"
 import {
   MAX_TOTAL_PDF_SIZE,
   PdfMergeValidationError,
+  createPdfItemId,
   getPdfLoadErrorMessage,
   mergePdfDocuments,
   validatePdfMergeSources,
 } from "./pdf-merge.ts"
+
+test("usa randomUUID quando a origem oferece a API", () => {
+  const expectedId = "123e4567-e89b-42d3-a456-426614174000"
+  const id = createPdfItemId({
+    randomUUID: () => expectedId,
+  })
+
+  assert.equal(id, expectedId)
+})
+
+test("gera UUID v4 com getRandomValues quando randomUUID não existe", () => {
+  const id = createPdfItemId({
+    getRandomValues: (bytes) => {
+      bytes.fill(0)
+      return bytes
+    },
+  })
+
+  assert.equal(id, "00000000-0000-4000-8000-000000000000")
+})
 
 async function createPdfSource(name, pageWidths) {
   const document = await PDFDocument.create()

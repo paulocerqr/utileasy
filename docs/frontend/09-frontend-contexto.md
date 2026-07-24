@@ -916,6 +916,11 @@ Os arquivos permanecem como objetos `File` na memória do navegador. A pré-visu
 não envia dados para o backend e não persiste a lista após recarregar a página. A
 tarefa do PDF.js é destruída depois de renderizar cada primeira página.
 
+Os identificadores internos dos cards usam `crypto.randomUUID()` quando disponível e
+geram um UUID v4 com `crypto.getRandomValues()` como fallback. Isso mantém a seleção
+de arquivos funcional quando o servidor caseiro é acessado por IP Tailscale via HTTP,
+origem em que alguns navegadores não expõem `randomUUID()`.
+
 ### Mesclagem local
 
 `frontend/lib/pdf-merge.ts` valida no mínimo dois documentos e no máximo 100 MB,

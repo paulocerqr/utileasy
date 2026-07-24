@@ -28,6 +28,7 @@ import {
   MAX_TOTAL_PDF_SIZE,
   MERGED_PDF_FILENAME,
   PdfMergeValidationError,
+  createPdfItemId,
   mergePdfDocuments,
   type PdfMergeProgress,
 } from "@/lib/pdf-merge"
@@ -175,7 +176,7 @@ export function PdfMergeWorkspace() {
       }
 
       runningSize += file.size
-      accepted.push({ id: crypto.randomUUID(), file })
+      accepted.push({ id: createPdfItemId(), file })
     }
 
     if (accepted.length > 0) {
