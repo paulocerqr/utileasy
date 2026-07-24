@@ -27,7 +27,7 @@ const domains = [
     icon: FileArchive,
     tools: [
       { label: "Conversão PDF ↔ DOCX", href: "/pdf-docx" },
-      { label: "Juntar e separar PDFs", href: "/juntarpdf" },
+      { label: "Juntar PDFs", href: "/juntarpdf" },
       { label: "Imagens para PDF", href: "/#feature-carousel" },
     ],
   },
