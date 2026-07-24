@@ -5,7 +5,7 @@ import { PdfMergeWorkspace } from "@/components/pdf-merge-workspace"
 export const metadata: Metadata = {
   title: "Juntar arquivos PDF — Utileazy",
   description:
-    "Organize arquivos PDF, escolha a ordem e acompanhe o limite da sua futura mesclagem.",
+    "Organize e una arquivos PDF no navegador, preservando a ordem de todas as páginas.",
 }
 
 export default function JuntarPdfPage() {
@@ -21,8 +21,8 @@ export default function JuntarPdfPage() {
             Juntar arquivos PDF
           </h1>
           <p className="mt-4 text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
-            Adicione seus PDFs, confira a primeira página e organize os arquivos
-            na ordem desejada para a mesclagem.
+            Adicione seus PDFs, confira a primeira página, escolha a ordem e
+            baixe o documento unificado.
           </p>
         </header>
 
