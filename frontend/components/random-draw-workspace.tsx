@@ -409,25 +409,9 @@ export function RandomDrawWorkspace() {
               <p className="mt-5 max-w-sm text-base font-medium">
                 Configure as opções e faça seu sorteio.
               </p>
-              <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-                Os resultados são gerados no seu dispositivo e não ficam salvos.
-              </p>
             </div>
           )}
         </div>
-
-        <div className="mt-6 flex items-start gap-3 rounded-xl border border-border bg-secondary/55 px-4 py-3">
-          <ShieldCheck
-            className="mt-0.5 size-5 shrink-0 text-brand-light"
-            aria-hidden="true"
-          />
-          <p className="text-xs leading-5 text-muted-foreground">
-            Este sorteador usa a fonte criptográfica do navegador e não envia sua
-            lista ao servidor. Não use o resultado em concursos com validade
-            jurídica.
-          </p>
-        </div>
-
         <p className="sr-only" aria-live="polite" aria-atomic="true">
           {announcement}
         </p>

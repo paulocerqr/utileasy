@@ -26,8 +26,8 @@ export function FileToolsSection() {
         />
         <ToolCard
           icon={FilePlus2}
-          title="Juntar e separar PDFs"
-          description="Combine vários arquivos em um só ou extraia páginas específicas."
+          title="Juntar PDFs"
+          description="Combine vários arquivos PDF em um único documento."
           href="/juntarpdf"
         />
         <ToolCard

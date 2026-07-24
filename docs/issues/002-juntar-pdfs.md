@@ -5,6 +5,8 @@
 **Complexidade:** Média  
 **Prioridade sugerida:** Etapa 2
 
+**Estado:** Implementada
+
 ## Descrição da tarefa
 
 Concluir `/juntarpdf`, gerando no navegador um único PDF com todos os documentos na
@@ -13,8 +15,8 @@ ordem definida pelo usuário e oferecendo o download imediato do resultado.
 ## Contexto atual
 
 Seleção múltipla, drag-and-drop, validação, prévia da primeira página, remoção,
-reordenação e limite acumulado de 100 MB já existem. O botão final ainda não produz o
-arquivo. A home diz “juntar e separar”, mas esta issue cobre somente a mesclagem.
+reordenação e limite acumulado de 100 MB já existiam antes desta implementação. A
+home dizia “juntar e separar”, mas esta issue cobre somente a mesclagem.
 
 ## Solução proposta
 
@@ -45,20 +47,19 @@ pois a mesclagem pode usar várias vezes o tamanho dos arquivos em RAM.
 
 ## Critérios de aceitação
 
-- [ ] Dois ou mais PDFs válidos podem ser unidos.
-- [ ] A ordem das páginas segue exatamente a ordem visual dos arquivos.
-- [ ] Todas as páginas de cada arquivo são preservadas.
-- [ ] O resultado é um PDF válido com nome previsível e download imediato.
-- [ ] Nenhum conteúdo é enviado pela rede.
-- [ ] PDFs protegidos, inválidos ou corrompidos são rejeitados sem quebrar a página.
-- [ ] O botão mostra processamento e não inicia duas mesclagens simultâneas.
-- [ ] Objetos, documentos e URLs temporárias são liberados depois do uso.
-- [ ] A cópia da home não promete separação de páginas enquanto ela não existir.
-- [ ] Testes cobrem ordem, quantidade de páginas, erro e limite acumulado.
+- [x] Dois ou mais PDFs válidos podem ser unidos.
+- [x] A ordem das páginas segue exatamente a ordem visual dos arquivos.
+- [x] Todas as páginas de cada arquivo são preservadas.
+- [x] O resultado é um PDF válido com nome previsível e download imediato.
+- [x] Nenhum conteúdo é enviado pela rede.
+- [x] PDFs protegidos, inválidos ou corrompidos são rejeitados sem quebrar a página.
+- [x] O botão mostra processamento e não inicia duas mesclagens simultâneas.
+- [x] Objetos, documentos e URLs temporárias são liberados depois do uso.
+- [x] A cópia da home não promete separação de páginas enquanto ela não existir.
+- [x] Testes cobrem ordem, quantidade de páginas, erro e limite acumulado.
 
 ## Evidências esperadas
 
 - Teste automatizado com PDFs pequenos de quantidades de páginas diferentes.
 - Verificação manual em desktop e dispositivo móvel.
 - Medição aproximada de memória com arquivos próximos ao limite.
-
