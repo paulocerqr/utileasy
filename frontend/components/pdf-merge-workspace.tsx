@@ -360,10 +360,6 @@ export function PdfMergeWorkspace() {
             <h2 id="pdf-files-title" className="mt-7 text-xl font-bold sm:text-2xl">
               Adicione os PDFs que deseja organizar
             </h2>
-            <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-              Arraste os arquivos para esta área ou selecione vários PDFs no seu
-              computador. Nada será enviado durante esta etapa.
-            </p>
             <button
               type="button"
               disabled={isMerging}
@@ -384,9 +380,6 @@ export function PdfMergeWorkspace() {
                 <h2 id="pdf-files-title" className="font-semibold">
                   Arquivos selecionados
                 </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Arraste os cards ou use as setas para alterar a ordem.
-                </p>
               </div>
               <p className="text-xs font-medium text-brand-light">
                 {items.length} {items.length === 1 ? "arquivo" : "arquivos"}
@@ -520,16 +513,12 @@ export function PdfMergeWorkspace() {
               style={{ width: `${usagePercentage}%` }}
             />
           </div>
-          <p className="mt-2 text-[10px] leading-4 text-muted-foreground">
-            O limite é calculado antes de cada arquivo entrar na lista.
-          </p>
         </div>
 
         <div className="mt-5 flex gap-3 rounded-md border border-warning/30 bg-warning/10 p-4 text-warning-foreground">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <p className="text-xs leading-5">
-            Para alterar a ordem, arraste os cards ou use os controles de cada
-            arquivo. A lista abaixo segue a ordem final.
+            A lista abaixo segue a ordem final.
           </p>
         </div>
 

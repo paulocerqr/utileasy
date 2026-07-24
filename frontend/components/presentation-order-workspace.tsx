@@ -320,27 +320,12 @@ export function PresentationOrderWorkspace() {
               <span className="flex size-16 items-center justify-center rounded-2xl border border-border bg-secondary text-brand-light">
                 <ListOrdered className="size-7" aria-hidden="true" />
               </span>
-              <p className="mt-5 max-w-sm text-base font-medium">
-                Adicione as pessoas ou equipes.
-              </p>
               <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
                 Cada participante aparecerá exatamente uma vez na ordem final.
               </p>
             </div>
           )}
         </div>
-
-        <div className="mt-6 flex items-start gap-3 rounded-xl border border-border bg-secondary/55 px-4 py-3">
-          <ShieldCheck
-            className="mt-0.5 size-5 shrink-0 text-brand-light"
-            aria-hidden="true"
-          />
-          <p className="text-xs leading-5 text-muted-foreground">
-            Os nomes e a ordem são processados somente neste navegador. Nada é
-            enviado ou salvo no servidor. Este sorteio não possui validade jurídica.
-          </p>
-        </div>
-
         <p className="sr-only" aria-live="polite" aria-atomic="true">
           {announcement}
         </p>

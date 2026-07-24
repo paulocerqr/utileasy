@@ -20,10 +20,6 @@ export default function JuntarPdfPage() {
           <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl">
             Juntar arquivos PDF
           </h1>
-          <p className="mt-4 text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
-            Adicione seus PDFs, confira a primeira página, escolha a ordem e
-            baixe o documento unificado.
-          </p>
         </header>
 
         <PdfMergeWorkspace />
