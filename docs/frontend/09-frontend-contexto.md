@@ -93,6 +93,7 @@ O build atual do Next compila as rotas:
 ```text
 /
 /divisor-de-grupos
+/imagens-para-pdf
 /juntarpdf
 /login
 /ordem-de-apresentacao
@@ -124,6 +125,8 @@ frontend/
     globals.css
     divisor-de-grupos/
       page.tsx
+    imagens-para-pdf/
+      page.tsx
     juntarpdf/
       page.tsx
     login/
@@ -144,6 +147,7 @@ frontend/
     dev-section.tsx
     hero.tsx
     group-divider-workspace.tsx
+    image-to-pdf-workspace.tsx
     navbar.tsx
     pdf-docx-converter.tsx
     pdf-merge-workspace.tsx
@@ -163,6 +167,8 @@ frontend/
     backend-proxy.ts
     group-divider.ts
     group-divider.test.mjs
+    image-to-pdf.ts
+    image-to-pdf.test.mjs
     pdf-merge.ts
     pdf-merge.test.mjs
     presentation-order.ts
@@ -457,7 +463,7 @@ Estado atual:
 - Permite selecionar funcionalidades pela lista lateral.
 - Respeita prefers-reduced-motion.
 - Usa imagens do Unsplash agrupadas por categoria.
-- Mantém links reais para /pdf-docx, /juntarpdf, /sorteador,
+- Mantém links reais para /pdf-docx, /juntarpdf, /imagens-para-pdf, /sorteador,
   /ordem-de-apresentacao, /divisor-de-grupos, /qr-code e /transcrisao.
 ```
 
@@ -474,7 +480,7 @@ Seção `Ferramentas de Arquivos`:
 ```text
 - Conversão PDF ↔ DOCX -> href /pdf-docx
 - Juntar PDFs -> href /juntarpdf
-- Imagens para PDF
+- Imagens para PDF -> href /imagens-para-pdf
 ```
 
 Seção `Mídia & Vídeo`:
@@ -650,6 +656,7 @@ Implementado:
 - Carrossel animado com as 18 funcionalidades da home.
 - Rota /pdf-docx com fluxo visual de conversão.
 - Rota /juntarpdf para seleção, pré-visualização, ordenação e mesclagem local de PDFs.
+- Rota /imagens-para-pdf com normalização e geração local de PDFs.
 - Rota /sorteador com sorteio local de números e itens sem repetição.
 - Rota /ordem-de-apresentacao com sorteio local e exportação em TXT.
 - Rota /divisor-de-grupos com divisão local, balanceada e copiável.
@@ -680,6 +687,7 @@ Ainda não implementado:
 ```text
 - Preservar a rota /transcrisao enquanto ela estiver linkada na home.
 - Preservar a rota /juntarpdf, que está linkada no AppShell, nos cards e no carrossel.
+- Preservar /imagens-para-pdf, que está linkada no AppShell, nos cards e no carrossel.
 - Preservar a rota /qr-code, que está linkada no AppShell, nos cards e no carrossel.
 - Em /juntarpdf, pdfjs-dist renderiza a prévia e pdf-lib realiza a mesclagem.
 - Manter o limite acumulado de 100 MB e o aviso sobre consumo de memória em celulares.
@@ -846,6 +854,7 @@ O build validado do Next inclui:
 ```text
 /
 /divisor-de-grupos
+/imagens-para-pdf
 /juntarpdf
 /login
 /ordem-de-apresentacao
@@ -1097,6 +1106,68 @@ imagem, e o SVG é mantido como texto até o download.
 Os testes criam matrizes QR reais e usam `jsQR` para decodificar amostras de URL e
 Wi-Fi, comparando o resultado com o payload original. Também cobrem protocolos,
 escapes, limite de conteúdo, campos obrigatórios e os downloads no padrão fixo.
+
+Validação:
+
+```bash
+docker compose run --rm frontend-check pnpm test
+docker compose run --rm frontend-check
+docker compose build frontend
+```
+
+## 18. Imagens para PDF
+
+A ferramenta funcional está em:
+
+```text
+/imagens-para-pdf
+```
+
+Arquivos principais:
+
+```text
+frontend/app/imagens-para-pdf/page.tsx
+frontend/components/image-to-pdf-workspace.tsx
+frontend/lib/image-to-pdf.ts
+frontend/lib/image-to-pdf.test.mjs
+```
+
+Formatos e limites:
+
+```text
+entrada              JPEG, PNG e WebP
+quantidade           até 50 imagens
+tamanho acumulado    até 100 MB
+dimensão processada  até 3.000 pixels no maior lado
+saída                 utileazy-imagens.pdf
+```
+
+O usuário pode selecionar ou arrastar imagens, conferir as prévias, remover arquivos
+e definir a ordem por drag-and-drop ou botões direcionais. Cada imagem gera exatamente
+uma página na ordem visual.
+
+Configurações:
+
+```text
+página       A4 com orientação automática ou tamanho natural da imagem
+margem       nenhuma, pequena, média ou grande
+ajuste       conter a imagem inteira ou preencher a página com possível corte
+```
+
+Antes da incorporação, `createImageBitmap` e Canvas aplicam a orientação visual,
+reduzem fotografias grandes e normalizam WebP para JPEG. PNG permanece PNG para
+preservar transparência. Navegadores sem `createImageBitmap` usam `Image.decode()`
+com uma URL temporária.
+
+`pdf-lib` incorpora cada imagem sequencialmente e gera o PDF no navegador. O botão
+fica bloqueado durante o processamento, mostra progresso por imagem e inicia o
+download ao concluir. Nenhuma imagem passa por `fetch`, API, storage ou histórico.
+
+Bitmaps são fechados depois do desenho, Canvas é zerado, URLs de prévia são revogadas
+na remoção ou ao sair da rota e a URL do PDF é revogada depois do download.
+
+Os testes cobrem formatos aceitos, redimensionamento proporcional, orientação A4,
+margens, modos de ajuste, ordem/dimensões das páginas, arquivo inválido e limites.
 
 Validação:
 

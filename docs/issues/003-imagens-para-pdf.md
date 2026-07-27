@@ -5,6 +5,8 @@
 **Complexidade:** Média  
 **Prioridade sugerida:** Etapa 2
 
+**Estado:** Implementada
+
 ## Descrição da tarefa
 
 Criar uma ferramenta que permita selecionar, ordenar e transformar imagens em um PDF
@@ -39,20 +41,19 @@ redimensionadas antes de entrar no PDF para evitar travamentos e arquivos excess
 
 ## Critérios de aceitação
 
-- [ ] JPEG, PNG e WebP válidos podem ser adicionados.
-- [ ] O usuário pode ordenar e remover imagens antes da geração.
-- [ ] A orientação visual da foto é preservada.
-- [ ] A configuração de página, margem e ajuste aparece no resultado.
-- [ ] Cada imagem gera uma página na ordem escolhida.
-- [ ] O PDF final pode ser aberto e baixado.
-- [ ] Arquivos inválidos ou acima dos limites geram mensagens claras.
-- [ ] Nenhuma imagem é enviada ao servidor.
-- [ ] URLs e bitmaps temporários são liberados após remoção e conclusão.
-- [ ] A rota funciona em desktop e telas móveis.
+- [x] JPEG, PNG e WebP válidos podem ser adicionados.
+- [x] O usuário pode ordenar e remover imagens antes da geração.
+- [x] A orientação visual da foto é preservada.
+- [x] A configuração de página, margem e ajuste aparece no resultado.
+- [x] Cada imagem gera uma página na ordem escolhida.
+- [x] O PDF final pode ser aberto e baixado.
+- [x] Arquivos inválidos ou acima dos limites geram mensagens claras.
+- [x] Nenhuma imagem é enviada ao servidor.
+- [x] URLs e bitmaps temporários são liberados após remoção e conclusão.
+- [x] A rota funciona em desktop e telas móveis.
 
 ## Evidências esperadas
 
 - Testes com imagens horizontais, verticais, transparentes e WebP.
 - PDF de referência validando ordem e dimensões.
 - Teste manual com fotos grandes em um dispositivo de memória limitada.
-
