@@ -18,7 +18,7 @@ um padrão visual reutilizável para ferramentas simples.
 ### Etapa 2 — arquivos e mídia processados no navegador
 
 5. [Juntar PDFs](002-juntar-pdfs.md) — implementado
-6. [Imagens para PDF](003-imagens-para-pdf.md)
+6. [Imagens para PDF](003-imagens-para-pdf.md) — implementada
 7. [Gravador de tela com áudio](010-gravador-de-tela.md)
 
 As ferramentas desta etapa preservam os arquivos no dispositivo do usuário e evitam

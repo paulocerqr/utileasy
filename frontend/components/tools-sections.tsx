@@ -34,6 +34,7 @@ export function FileToolsSection() {
           icon={ImageIcon}
           title="Imagens para PDF"
           description="Transforme fotos e capturas de tela em um documento PDF organizado."
+          href="/imagens-para-pdf"
         />
       </div>
     </section>

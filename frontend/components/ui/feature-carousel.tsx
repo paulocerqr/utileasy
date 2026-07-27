@@ -88,6 +88,8 @@ const FEATURES: Feature[] = [
         "Imagens para PDF",
         ImageIcon,
         "Transforme fotos e capturas de tela em um documento PDF organizado.",
+        "/imagens-para-pdf",
+        "Abrir ferramenta",
       ],
     ],
   ),
