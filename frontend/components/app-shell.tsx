@@ -28,7 +28,7 @@ const domains = [
     tools: [
       { label: "Conversão PDF ↔ DOCX", href: "/pdf-docx" },
       { label: "Juntar PDFs", href: "/juntarpdf" },
-      { label: "Imagens para PDF", href: "/#feature-carousel" },
+      { label: "Imagens para PDF", href: "/imagens-para-pdf" },
     ],
   },
   {
