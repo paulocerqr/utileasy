@@ -13,26 +13,28 @@
 
   ## O que corrigir antes
 
-  1. Atualizar dependências do frontend
+  1. Atualizar dependências do frontend — concluído em 29/07/2026
 
-  pnpm audit --prod encontrou 21 vulnerabilidades, sendo 9 de severidade alta. A principal é o Next.js 16.2.6; a versão corrigida indicada é 16.2.11. Há também vulnerabilidades no sharp e
-  dependências transitivas do shadcn. Advisory do Next.js (https://github.com/advisories/GHSA-6gpp-xcg3-4w24), advisory de DoS (https://github.com/advisories/GHSA-m99w-x7hq-7vfj).
+  O frontend foi atualizado para Next.js 16.2.12, `sharp` 0.35.0 e `postcss`
+  8.5.24. A CLI `shadcn`, que não era usada pelo runtime ou scripts do projeto,
+  foi removida das dependências instaladas.
 
-  O pacote shadcn parece ser CLI e provavelmente não precisa estar em dependencies de produção.
+  `pnpm audit` e `pnpm audit --prod` passaram sem vulnerabilidades conhecidas
+  depois da atualização.
 
   2. Rotacionar a chave AssemblyAI
 
   Ela não está no Git, mas apareceu anteriormente na saída de uma ferramenta nesta conversa. Eu a revogaria e geraria outra antes do deploy público.
 
-  3. Proteger melhor arquivos de ambiente
+  3. Proteger melhor arquivos de ambiente — concluído no repositório local
 
-  O .gitignore cobre somente .env. Recomendo:
+  O `.gitignore` agora cobre:
 
   .env
   .env.*
   !.env.example
 
-  O .env local está com permissão 644. Em servidor, use:
+  O `.env` local passou a usar:
 
   chmod 600 .env
 
@@ -69,11 +71,11 @@
 
   Eu publicaria depois de:
 
-  - Atualizar as dependências vulneráveis.
   - Adicionar CI rodando backend, TypeScript e build.
   - Melhorar a página inicial do README com arquitetura, screenshots, URL da demonstração e decisões técnicas.
   - Incluir política de privacidade simples, explicando que áudios são enviados à AssemblyAI, resultados anônimos expiram e resultados autenticados são persistidos.
   - Mesclar server-main na branch principal por PR, mostrando um fluxo profissional.
 
-  Minha conclusão: o repositório parece limpo para publicação, mas eu não abriria e divulgaria o deploy antes de atualizar o Next.js, rotacionar a chave AssemblyAI e reforçar o tratamento
-  de .env. Essas são as pendências realmente importantes.
+  Minha conclusão: as dependências e o tratamento local de `.env` foram
+  corrigidos. A chave AssemblyAI que apareceu fora do Git ainda deve ser
+  rotacionada antes de abrir e divulgar o deploy.

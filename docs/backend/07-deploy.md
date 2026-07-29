@@ -23,6 +23,12 @@ Preencher pelo menos `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD` e
 `ASSEMBLYAI_API_KEY`. Se o uso anônimo estiver habilitado, configure também o par de
 chaves Turnstile adequado ao ambiente. Depois da primeira inicialização:
 
+Para preparar o servidor caseiro que será publicado por HTTPS através do Cloudflare
+Tunnel, use `deploy/env.home.example` como base. Esse template ativa cookies seguros,
+mantém o worker solo e limita uploads a 95 MiB para deixar margem dentro do limite de
+100 MB dos planos Free/Pro da Cloudflare. Substitua o domínio de exemplo e todos os
+placeholders antes de usá-lo.
+
 ```bash
 docker compose exec backend python manage.py createsuperuser
 ```
