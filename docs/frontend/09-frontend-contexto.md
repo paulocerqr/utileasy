@@ -6,7 +6,7 @@ Este documento resume apenas o estado atual do frontend do projeto Utileazy. A i
 
 ```text
 Frontend:
-Next.js 16.2.6 + React 19 + TypeScript + Tailwind CSS 4
+Next.js 16.2.12 + React 19 + TypeScript + Tailwind CSS 4
 
 Fonte global:
 Geist Mono via next/font/google
