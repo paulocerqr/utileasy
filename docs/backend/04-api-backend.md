@@ -84,6 +84,12 @@ Respostas 429 do rate limit Redis incluem `Retry-After`. Os padrões de produç�
 2 tentativas por minuto/IP, 10 por 24 horas/IP e 3 por 24 horas/cookie. O ambiente de
 desenvolvimento pode sobrescrevê-los sem alterar o código.
 
+O backend ignora headers de IP por padrão. O perfil caseiro habilita
+`DJANGO_TRUST_PROXY_HEADERS=1` somente na rede interna e consome exclusivamente o
+`X-Real-IP` normalizado pelo Caddy. `X-Forwarded-For` e `CF-Connecting-IP` nunca são
+interpretados diretamente pelo Django; valores ausentes ou inválidos falham de forma
+segura para `REMOTE_ADDR`.
+
 A cota diária de segundos é verificada de forma exata pelo worker depois do ffprobe.
 Quando esgotada, o job muda para `failed` antes de chamar a AssemblyAI.
 

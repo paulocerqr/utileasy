@@ -15,6 +15,13 @@ CSRF e headers de autorização ao Django privado.
 O proxy comum está em `frontend/lib/backend-proxy.ts`. A autorização continua sendo
 decidida pelo Django.
 
+No perfil do servidor caseiro, Caddy substitui os headers de encaminhamento pelo IP
+calculado a partir de `CF-Connecting-IP`. O frontend só preserva `X-Real-IP`,
+`X-Forwarded-For` e `X-Forwarded-Proto` quando `TRUSTED_REVERSE_PROXY=1`; nos
+demais ambientes, remove todos os headers de proxy recebidos. O host interno é
+determinado pelo destino privado e headers específicos da Cloudflare não chegam ao
+Django.
+
 ## Conta autenticada
 
 `LoginForm` obtém `/api/auth/csrf`, envia username e senha com `X-CSRFToken` e recebe

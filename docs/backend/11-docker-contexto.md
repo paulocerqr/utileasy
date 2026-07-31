@@ -63,7 +63,15 @@ interna da aplicação. O token do túnel é um secret montado a partir de
 leitura, não recebem capabilities e rodam com o UID/GID do usuário de deploy.
 Uma camada local mínima baseada em `caddy:2.11.4-alpine` remove o
 `cap_net_bind_service` embutido no binário oficial, desnecessário porque o listener
-interno usa a porta 8080.
+interno usa a porta 8080. O `.dockerignore` desse contexto envia somente o
+`Dockerfile` ao builder, evitando a inclusão acidental de configurações locais.
+
+O Caddy aceita somente o `PUBLIC_DOMAIN`, confia no salto privado do `cloudflared`,
+extrai um endereço único de `CF-Connecting-IP` e sobrescreve os headers enviados ao
+Next.js. O frontend remove headers de proxy nos demais perfis e, neste perfil,
+repassa apenas os valores normalizados. O Django só habilita a confiança nesses
+headers pelo override caseiro. Os logs JSON omitem cookies, autorização, CSRF, token
+de job e segredo do webhook; a rotação continua sob responsabilidade do Docker.
 
 ```bash
 docker compose \

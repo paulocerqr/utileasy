@@ -73,6 +73,11 @@ docker compose \
   up -d --build
 ```
 
+Não remova `--quiet` da validação em terminais, logs ou capturas compartilhadas: a
+saída completa do `docker compose config` resolve o `env_file` e pode exibir
+credenciais. O contexto de build mínimo do Caddy também ignora qualquer arquivo que
+não seja seu `Dockerfile`.
+
 O último override remove a porta `3000` herdada do Compose base. `cloudflared` e
 Caddy usam imagens com versão fixa, rodam sem capabilities e com filesystem
 somente leitura. O token é montado em `/run/secrets`; ele não aparece na linha de
@@ -86,6 +91,11 @@ herdada.
 Caddy escuta HTTP somente na porta 8080 da rede Docker. O HTTPS termina na borda
 Cloudflare e o túnel transporta a requisição até o host. Não publique 80, 443, 3000,
 8000, 5432, 6379 ou 2000 no roteador ou no host.
+
+O listener valida `PUBLIC_DOMAIN` e normaliza o IP original usando
+`CF-Connecting-IP`; o backend não confia diretamente em valores de
+`X-Forwarded-For` fornecidos pelo visitante. No painel do Tunnel, preserve o Host
+original ou configure o HTTP Host Header com o mesmo valor de `PUBLIC_DOMAIN`.
 
 O perfil acrescenta health checks para backend, frontend, Caddy e Tunnel, limita
 logs a três arquivos de 10 MB por container e reserva 192 MB para cada serviço de
