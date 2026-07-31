@@ -34,16 +34,23 @@ def hash_secret(value):
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+def normalize_ip(value):
+    try:
+        return str(ipaddress.ip_address(value.strip()))
+    except (AttributeError, ValueError):
+        return None
+
+
 def get_client_ip(request):
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    candidates = [item.strip() for item in forwarded.split(",") if item.strip()]
-    candidates.append(request.META.get("REMOTE_ADDR", ""))
-    for candidate in candidates:
-        try:
-            return str(ipaddress.ip_address(candidate))
-        except ValueError:
-            continue
-    return "unknown"
+    if settings.DJANGO_TRUST_PROXY_HEADERS:
+        # O Caddy sobrescreve este header com o client_ip calculado a partir de
+        # CF-Connecting-IP. X-Forwarded-For nunca é usado diretamente porque pode
+        # conter uma cadeia fornecida pelo visitante.
+        proxy_ip = normalize_ip(request.headers.get("X-Real-IP", ""))
+        if proxy_ip:
+            return proxy_ip
+
+    return normalize_ip(request.META.get("REMOTE_ADDR", "")) or "unknown"
 
 
 def get_anonymous_session(request):

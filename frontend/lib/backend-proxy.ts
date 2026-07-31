@@ -4,12 +4,52 @@ const backendBaseUrl = (
   "http://localhost:8000"
 ).replace(/\/$/, "")
 
-export async function proxyBackendRequest(request: Request, apiPath: string) {
-  const target = `${backendBaseUrl}/api/${apiPath.replace(/^\//, "")}`
-  const headers = new Headers(request.headers)
+const trustedReverseProxy = process.env.TRUSTED_REVERSE_PROXY === "1"
+
+const untrustedForwardingHeaders = [
+  "cf-connecting-ip",
+  "cf-connecting-ipv6",
+  "forwarded",
+  "true-client-ip",
+  "x-forwarded-for",
+  "x-forwarded-host",
+  "x-forwarded-proto",
+  "x-real-ip",
+]
+
+export function buildBackendHeaders(
+  requestHeaders: HeadersInit,
+  trustProxyHeaders = trustedReverseProxy,
+) {
+  const headers = new Headers(requestHeaders)
+  const clientIp = trustProxyHeaders
+    ? headers.get("x-real-ip")?.trim()
+    : undefined
+  const forwardedProto = trustProxyHeaders
+    ? headers.get("x-forwarded-proto")?.trim().toLowerCase()
+    : undefined
+
   headers.delete("connection")
   headers.delete("host")
   headers.delete("transfer-encoding")
+  for (const header of untrustedForwardingHeaders) {
+    headers.delete(header)
+  }
+
+  if (clientIp && !clientIp.includes(",")) {
+    headers.set("x-real-ip", clientIp)
+    headers.set("x-forwarded-for", clientIp)
+  }
+  if (forwardedProto === "http" || forwardedProto === "https") {
+    headers.set("x-forwarded-proto", forwardedProto)
+  }
+
+  return headers
+}
+
+export async function proxyBackendRequest(request: Request, apiPath: string) {
+  const target = `${backendBaseUrl}/api/${apiPath.replace(/^\//, "")}`
+  const headers = buildBackendHeaders(request.headers)
 
   const init: RequestInit & { duplex?: "half" } = {
     method: request.method,

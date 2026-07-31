@@ -49,10 +49,44 @@ class AnonymousProtectionTests(SimpleTestCase):
         with self.assertRaises(CaptchaError):
             validate_turnstile("wrong-action-token", self.request)
 
-    def test_client_ip_uses_first_valid_forwarded_address(self):
+    @override_settings(DJANGO_TRUST_PROXY_HEADERS=True)
+    def test_client_ip_uses_normalized_proxy_address(self):
         request = RequestFactory().get(
             "/",
-            HTTP_X_FORWARDED_FOR="198.51.100.20, 172.18.0.2",
+            HTTP_X_REAL_IP="198.51.100.20",
+            HTTP_X_FORWARDED_FOR="203.0.113.99, 172.18.0.2",
+            HTTP_CF_CONNECTING_IP="203.0.113.98",
             REMOTE_ADDR="172.18.0.3",
         )
         self.assertEqual(get_client_ip(request), "198.51.100.20")
+
+    @override_settings(DJANGO_TRUST_PROXY_HEADERS=True)
+    def test_client_ip_ignores_forged_forwarding_headers(self):
+        request = RequestFactory().get(
+            "/",
+            HTTP_X_FORWARDED_FOR="203.0.113.99, 172.18.0.2",
+            HTTP_CF_CONNECTING_IP="203.0.113.98",
+            REMOTE_ADDR="172.18.0.3",
+        )
+        self.assertEqual(get_client_ip(request), "172.18.0.3")
+
+    @override_settings(DJANGO_TRUST_PROXY_HEADERS=True)
+    def test_client_ip_rejects_invalid_normalized_proxy_address(self):
+        request = RequestFactory().get(
+            "/",
+            HTTP_X_REAL_IP="203.0.113.10, 198.51.100.20",
+            HTTP_X_FORWARDED_FOR="203.0.113.99",
+            REMOTE_ADDR="172.18.0.3",
+        )
+        self.assertEqual(get_client_ip(request), "172.18.0.3")
+
+    @override_settings(DJANGO_TRUST_PROXY_HEADERS=False)
+    def test_client_ip_does_not_trust_proxy_headers_by_default(self):
+        request = RequestFactory().get(
+            "/",
+            HTTP_X_REAL_IP="198.51.100.20",
+            HTTP_X_FORWARDED_FOR="198.51.100.20",
+            HTTP_CF_CONNECTING_IP="198.51.100.20",
+            REMOTE_ADDR="192.0.2.10",
+        )
+        self.assertEqual(get_client_ip(request), "192.0.2.10")
