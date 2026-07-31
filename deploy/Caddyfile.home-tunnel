@@ -1,16 +1,55 @@
 {
 	admin off
 	auto_https off
+
+	servers {
+		timeouts {
+			read_header 10s
+			read_body 15m
+			write 15m
+			idle 5m
+		}
+
+		# Somente o cloudflared alcança este listener pela rede tunnel_edge.
+		# A Cloudflare fornece o IP original em um header de valor único.
+		trusted_proxies static private_ranges
+		trusted_proxies_strict
+		client_ip_headers CF-Connecting-IP
+	}
 }
 
-:8080 {
+http://{$PUBLIC_DOMAIN}:8080 {
 	encode zstd gzip
 	header -Server
 
 	log {
 		output stdout
-		format json
+		format filter {
+			request>headers>Authorization delete
+			request>headers>Cookie delete
+			request>headers>Proxy-Authorization delete
+			request>headers>X-Assemblyai-Webhook-Secret delete
+			request>headers>X-Csrftoken delete
+			request>headers>X-Job-Token delete
+			wrap json
+		}
 	}
 
-	reverse_proxy frontend:3000
+	reverse_proxy frontend:3000 {
+		# Nunca encaminhe a cadeia fornecida pelo visitante. O valor calculado por
+		# Caddy vem exclusivamente de CF-Connecting-IP no proxy confiável.
+		header_up X-Real-IP {client_ip}
+		header_up X-Forwarded-For {client_ip}
+		header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
+		header_up -CF-Connecting-IP
+		header_up -CF-Connecting-IPv6
+		header_up -Forwarded
+		header_up -True-Client-IP
+
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 90s
+			keepalive 30s
+		}
+	}
 }

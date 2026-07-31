@@ -13,6 +13,8 @@ services:
 
   backend:
     logging: *bounded-logging
+    environment:
+      DJANGO_TRUST_PROXY_HEADERS: "1"
     healthcheck:
       test:
         - CMD
@@ -44,6 +46,8 @@ services:
     ports: !reset []
     expose:
       - "3000"
+    environment:
+      TRUSTED_REVERSE_PROXY: "1"
     logging: *bounded-logging
     depends_on:
       backend:
@@ -69,6 +73,8 @@ services:
     container_name: utilitydev-caddy-home
     restart: unless-stopped
     user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?PUBLIC_DOMAIN must be configured}
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -95,6 +101,8 @@ services:
         - --fail
         - --silent
         - --show-error
+        - --header
+        - "Host: ${PUBLIC_DOMAIN:?PUBLIC_DOMAIN must be configured}"
         - http://127.0.0.1:8080/login
       interval: 15s
       timeout: 5s
