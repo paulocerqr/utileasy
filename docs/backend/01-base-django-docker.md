@@ -147,6 +147,7 @@ Perfis:
 
 ```text
 docker-compose.home.yml  limites para i5/6 GB e worker solo
+docker-compose.home-tunnel.yml  Caddy e Cloudflare Tunnel sem portas publicadas
 docker-compose.dev.yml   portas loopback e concorrência 2
 docker-compose.vps.yml   Caddy, limites do Beat e workers separados
 ```

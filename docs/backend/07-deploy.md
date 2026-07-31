@@ -9,6 +9,7 @@ o comportamento adequado ao hardware:
 ```text
 docker-compose.yml       serviços base
 docker-compose.home.yml  i5 2c/4t e 6 GB
+docker-compose.home-tunnel.yml  Caddy e Tunnel sem portas no host
 docker-compose.dev.yml   Ryzen 5600GT, 16 GB e portas locais
 docker-compose.vps.yml   2–4 vCPU, 8 GB, HTTPS e workers separados
 ```
@@ -36,6 +37,60 @@ docker compose exec backend python manage.py createsuperuser
 O cadastro público não está habilitado; o administrador cria usuários comuns pelo
 Django Admin.
 
+## Servidor caseiro com Cloudflare Tunnel
+
+Use `deploy/env.home.example` como base do `.env`, substitua o domínio e todos os
+placeholders e configure `PUID`/`PGID` para o usuário que executa o Docker.
+
+O token do Tunnel fica somente em:
+
+```text
+secrets/cloudflare-tunnel-token
+```
+
+O arquivo deve pertencer ao usuário indicado por `PUID`/`PGID`, usar permissão `600`
+e conter apenas o token do túnel gerenciado remotamente. No painel Cloudflare, a
+rota publicada deve apontar para:
+
+```text
+http://caddy:8080
+```
+
+Inicialização:
+
+```bash
+docker compose version
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.home.yml \
+  -f docker-compose.home-tunnel.yml \
+  config --quiet
+
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.home.yml \
+  -f docker-compose.home-tunnel.yml \
+  up -d --build
+```
+
+O último override remove a porta `3000` herdada do Compose base. `cloudflared` e
+Caddy usam imagens com versão fixa, rodam sem capabilities e com filesystem
+somente leitura. O token é montado em `/run/secrets`; ele não aparece na linha de
+comando nem no ambiente do processo.
+
+O override usa a tag Compose `!reset`. Se a validação informar que essa tag não é
+suportada, atualize o plugin `docker compose` antes de continuar; não substitua o
+reset por uma lista vazia sem conferir o merge, pois isso pode manter a porta
+herdada.
+
+Caddy escuta HTTP somente na porta 8080 da rede Docker. O HTTPS termina na borda
+Cloudflare e o túnel transporta a requisição até o host. Não publique 80, 443, 3000,
+8000, 5432, 6379 ou 2000 no roteador ou no host.
+
+O perfil acrescenta health checks para backend, frontend, Caddy e Tunnel, limita
+logs a três arquivos de 10 MB por container e reserva 192 MB para cada serviço de
+borda. O worker continua `solo`, com uma task por vez.
+
 ## Servidor caseiro com Tailscale
 
 Configuração principal:
@@ -57,7 +112,8 @@ docker compose -f docker-compose.yml -f docker-compose.home.yml up -d --build
 ```
 
 Somente `${TAILSCALE_IP}:3000` é publicado. Backend, PostgreSQL e Redis permanecem
-internos.
+internos. Esse modo direto é útil para diagnóstico privado e não deve ser combinado
+com o override do Tunnel.
 
 ## Desenvolvimento
 

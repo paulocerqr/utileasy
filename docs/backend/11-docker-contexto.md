@@ -47,6 +47,36 @@ frontend é publicado no IP Tailscale; demais serviços ficam internos.
 docker compose -f docker-compose.yml -f docker-compose.home.yml up -d --build
 ```
 
+## Perfil caseiro com Cloudflare Tunnel
+
+`docker-compose.home-tunnel.yml` deve ser aplicado depois do perfil caseiro. Ele
+remove a publicação da porta `3000` com `!reset`, acrescenta Caddy 2.11.4 e
+cloudflared 2026.7.2 e não publica nenhuma porta no host.
+
+```text
+Cloudflare -> cloudflared -> caddy:8080 -> frontend:3000 -> backend:8000
+```
+
+`cloudflared` participa apenas da rede `tunnel_edge`; Caddy liga essa rede à rede
+interna da aplicação. O token do túnel é um secret montado a partir de
+`secrets/cloudflare-tunnel-token`. Caddy e cloudflared usam filesystem somente
+leitura, não recebem capabilities e rodam com o UID/GID do usuário de deploy.
+Uma camada local mínima baseada em `caddy:2.11.4-alpine` remove o
+`cap_net_bind_service` embutido no binário oficial, desnecessário porque o listener
+interno usa a porta 8080.
+
+```bash
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.home.yml \
+  -f docker-compose.home-tunnel.yml \
+  up -d --build
+```
+
+Todos os serviços persistentes usam rotação `json-file` de 10 MB por arquivo e três
+arquivos. Health checks encadeiam backend, frontend, Caddy e Tunnel antes de liberar
+as dependências.
+
 ## Perfil de desenvolvimento
 
 `docker-compose.dev.yml` publica PostgreSQL e backend em loopback e usa prefork com

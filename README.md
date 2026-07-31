@@ -4,9 +4,10 @@ Aplicação com Next.js, Django REST Framework e PostgreSQL, executada com Docke
 
 ## Arquitetura
 
-- `frontend`: único serviço publicado no host, na porta `3000` do IP Tailscale.
-- `backend`: acessível somente pela rede interna do Docker na porta `8000`.
-- `db`: acessível somente pela rede interna do Docker na porta `5432`.
+- No perfil caseiro com Tunnel, nenhuma porta da aplicação é publicada no host.
+- `cloudflared` abre a conexão de saída e entrega as requisições ao Caddy interno.
+- `frontend` encaminha as APIs ao backend privado pela rede Docker.
+- PostgreSQL e Redis permanecem acessíveis somente pelos containers autorizados.
 
 Não é necessário instalar Traefik ou Portainer para esta configuração.
 
@@ -15,42 +16,47 @@ Não é necessário instalar Traefik ou Portainer para esta configuração.
 O mesmo código atende desenvolvimento, servidor caseiro e VPS. As diferenças ficam
 em arquivos Compose complementares e no `.env`.
 
-### Servidor caseiro
+### Servidor caseiro com Cloudflare Tunnel
 
 Envie ou clone o projeto no servidor e acesse-o por SSH. Dentro do diretório do projeto:
 
 ```bash
-cp .env.example .env
+cp deploy/env.home.example .env
+chmod 600 .env
 ```
 
-Edite `.env` e defina, no mínimo:
+Substitua o domínio de exemplo, os placeholders e configure `PUID`/`PGID` com o
+usuário que executa o Docker. O token do Tunnel não fica no `.env`: salve-o em
+`secrets/cloudflare-tunnel-token`, com o mesmo proprietário do usuário de deploy e
+permissão `600`.
 
-- `TAILSCALE_IP`: IP Tailscale atual do servidor.
-- `DJANGO_SECRET_KEY`: valor longo e aleatório.
-- `POSTGRES_PASSWORD`: senha forte e exclusiva.
-- `DJANGO_ALLOWED_HOSTS`: deve conter `backend` e o IP Tailscale.
-
-Confirme o IP no servidor com:
+Depois que o Tunnel gerenciado remotamente estiver configurado para encaminhar o
+hostname público a `http://caddy:8080`, inicie:
 
 ```bash
-tailscale ip -4
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.home.yml \
+  -f docker-compose.home-tunnel.yml \
+  up -d --build
 ```
 
-Construa e inicie a aplicação:
+Esse merge remove a publicação herdada da porta `3000`. Caddy, Next.js, Django,
+PostgreSQL, Redis e as métricas do `cloudflared` permanecem somente nas redes
+Docker. O Tunnel usa uma conexão de saída; não crie redirecionamentos de portas no
+roteador.
+
+### Servidor caseiro com acesso direto pelo Tailscale
+
+O perfil anterior continua disponível para diagnóstico privado. Defina
+`TAILSCALE_IP` e use somente os dois primeiros arquivos Compose:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.home.yml up -d --build
 ```
 
-A aplicação ficará disponível em:
-
-```text
-http://<IP_TAILSCALE>:3000
-```
-
-O bind usa o valor de `TAILSCALE_IP`. Se a variável não for definida, a porta fica disponível apenas em `127.0.0.1`, evitando exposição acidental em todas as interfaces.
-
-Configure também a origem usada no navegador, por exemplo:
+Nesse modo, o frontend é publicado em `http://<IP_TAILSCALE>:3000`; backend, banco
+e Redis continuam internos.
 
 ```dotenv
 DJANGO_CSRF_TRUSTED_ORIGINS=http://100.118.213.109:3000
@@ -144,7 +150,11 @@ validação bem-sucedida.
 Depois de enviar ou baixar uma nova versão do código no servidor:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.home.yml up -d --build
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.home.yml \
+  -f docker-compose.home-tunnel.yml \
+  up -d --build
 ```
 
 ## Comandos úteis

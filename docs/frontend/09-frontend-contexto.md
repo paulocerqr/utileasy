@@ -57,6 +57,10 @@ comando: pnpm start --hostname 0.0.0.0
 depende de: backend
 ```
 
+No perfil `docker-compose.home-tunnel.yml`, a publicação da porta 3000 é removida.
+O frontend passa a ser alcançado somente pelo Caddy interno, que recebe tráfego do
+container `cloudflared`; nenhuma porta da aplicação é publicada no host.
+
 O Dockerfile do frontend usa múltiplos estágios:
 
 ```text
