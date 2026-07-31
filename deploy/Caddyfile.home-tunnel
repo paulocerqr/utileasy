@@ -1,0 +1,16 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	encode zstd gzip
+	header -Server
+
+	log {
+		output stdout
+		format json
+	}
+
+	reverse_proxy frontend:3000
+}

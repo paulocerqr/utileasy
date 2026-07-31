@@ -1,6 +1,8 @@
 .env
 .env.*
 !.env.example
+secrets/*
+!secrets/README.md
 *.pyc
 __pycache__/
 .pytest_cache/
