@@ -15,10 +15,13 @@ import {
 import Link from "next/link"
 
 import { TurnstileWidget } from "@/components/turnstile-widget"
+import {
+  isTranscriptionFileSizeAllowed,
+  TRANSCRIPTION_MAX_FILE_SIZE_MB,
+} from "@/lib/transcription-limits"
 
 const acceptedFormats = ".mp3,.wav,.m4a,.aac,.ogg,.flac,.mp4,.mov,.mkv,.webm,.avi"
 const allowedExtensions = new Set(acceptedFormats.split(","))
-const maxFileSize = 500 * 1024 * 1024
 const pollIntervalMs = 5000
 const maxPollAttempts = 720
 
@@ -123,8 +126,8 @@ export function UploadArea() {
       setError("Formato não suportado. Selecione um áudio ou vídeo listado abaixo.")
       return
     }
-    if (nextFile.size > maxFileSize) {
-      setError("O tamanho máximo permitido é 500 MB.")
+    if (!isTranscriptionFileSizeAllowed(nextFile.size)) {
+      setError(`O tamanho máximo permitido é ${TRANSCRIPTION_MAX_FILE_SIZE_MB} MB.`)
       return
     }
     setFile(nextFile)

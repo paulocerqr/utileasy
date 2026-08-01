@@ -51,6 +51,17 @@ class TranscriptionApiTests(TestCase):
         response = self.client.post(reverse("transcriptions:create"), {"file": upload})
         self.assertEqual(response.status_code, 415)
 
+    @override_settings(TRANSCRIPTION_MAX_FILE_SIZE=1024 * 1024)
+    def test_rejects_upload_over_configured_size_limit(self):
+        upload = SimpleUploadedFile(
+            "large.mp3",
+            b"x" * (1024 * 1024 + 1),
+            content_type="audio/mpeg",
+        )
+        response = self.client.post(reverse("transcriptions:create"), {"file": upload})
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.json()["detail"], "O tamanho máximo permitido é 1 MB.")
+
     def test_completed_job_downloads_pdf(self):
         audio = Audio.objects.create(
             hash="a" * 64,

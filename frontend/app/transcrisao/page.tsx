@@ -1,4 +1,5 @@
 import { UploadArea } from "@/components/transcricao/upload-area"
+import { TRANSCRIPTION_MAX_FILE_SIZE_MB } from "@/lib/transcription-limits"
 import { Zap, ShieldCheck } from "lucide-react"
 
 export const metadata = {
@@ -42,7 +43,7 @@ export default function TranscricaoPage() {
 
         {/* Info footer */}
         <p className="mt-8 text-center text-xs text-muted-foreground">
-          Tamanho máximo: 500 MB &mdash; O arquivo é removido após o processamento; a transcrição permanece salva.
+          Tamanho máximo: {TRANSCRIPTION_MAX_FILE_SIZE_MB} MB &mdash; O arquivo é removido após o processamento; a transcrição permanece salva.
         </p>
       </main>
     </div>
