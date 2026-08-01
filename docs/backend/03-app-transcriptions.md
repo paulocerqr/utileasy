@@ -227,7 +227,7 @@ ReportLab gera o PDF em memória. Nome e texto são escapados antes de entrar em
 Padrões conservadores versionados no `.env.example`:
 
 ```text
-TRANSCRIPTION_MAX_FILE_SIZE=524288000
+TRANSCRIPTION_MAX_FILE_SIZE=99614720
 TRANSCRIPTION_MAX_DURATION_SECONDS=7200
 TRANSCRIPTION_MAX_PENDING_JOBS=10
 TRANSCRIPTION_MAX_PENDING_PER_USER=2

@@ -598,7 +598,7 @@ Estado atual:
 ```text
 - Componente client-side com seleção e drag-and-drop.
 - Aceita MP3, WAV, M4A, AAC, OGG, FLAC, MP4, MOV, MKV, WebM e AVI.
-- Valida o limite de 500 MB antes do envio.
+- Valida o limite de 95 MiB antes do envio, mantendo margem para o proxy da Cloudflare.
 - Envia FormData para POST /api/transcriptions.
 - Obtém um token em GET /api/auth/csrf antes do upload.
 - Envia o token no header X-CSRFToken.
@@ -754,7 +754,7 @@ A rota funcional é `/transcrisao` e importa `frontend/components/transcricao/up
 ```text
 1. Usuário entra com uma conta criada pelo administrador.
 2. Usuário seleciona ou arrasta um arquivo.
-3. Frontend valida extensão e limite de 500 MB.
+3. Frontend valida extensão e limite de 95 MiB.
 4. Frontend obtém CSRF e envia FormData no campo `file` com X-CSRFToken.
 5. API cria o job da conta ou um job temporário com UUID e segredo adicional.
 6. Frontend consulta a cada 5 segundos usando sessão ou `X-Job-Token`.
