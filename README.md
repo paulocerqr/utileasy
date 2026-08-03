@@ -34,11 +34,7 @@ Depois que o Tunnel gerenciado remotamente estiver configurado para encaminhar o
 hostname público a `http://caddy:8080`, inicie:
 
 ```bash
-docker compose \
-  -f docker-compose.yml \
-  -f docker-compose.home.yml \
-  -f docker-compose.home-tunnel.yml \
-  up -d --build
+./deploy/compose-home-tunnel.sh up -d --build
 ```
 
 Esse merge remove a publicação herdada da porta `3000`. Caddy, Next.js, Django,
@@ -150,48 +146,42 @@ validação bem-sucedida.
 Depois de enviar ou baixar uma nova versão do código no servidor:
 
 ```bash
-docker compose \
-  -f docker-compose.yml \
-  -f docker-compose.home.yml \
-  -f docker-compose.home-tunnel.yml \
-  up -d --build
+./deploy/compose-home-tunnel.sh up -d --build
 ```
+
+O wrapper sempre carrega os três manifests do perfil. Não execute `down`, `rm` ou `up` com
+um conjunto incompleto de arquivos Compose: isso pode remover apenas parte do stack e deixar
+o Tunnel conectado a uma origem indisponível.
 
 ## Comandos úteis
 
 Ver o estado e os logs:
 
 ```bash
-docker compose ps
-docker compose logs -f
+./deploy/compose-home-tunnel.sh ps
+./deploy/compose-home-tunnel.sh logs -f
 ```
 
 Criar um superusuário:
 
 ```bash
-docker compose exec backend python manage.py createsuperuser
+./deploy/compose-home-tunnel.sh exec backend python manage.py createsuperuser
 ```
 
 Executar migrações manualmente:
 
 ```bash
-docker compose exec backend python manage.py migrate
+./deploy/compose-home-tunnel.sh exec backend python manage.py migrate
 ```
 
 Parar a aplicação sem apagar o banco:
 
 ```bash
-docker compose down
+./deploy/compose-home-tunnel.sh stop
 ```
 
-Apagar também os dados persistidos do PostgreSQL:
-
-```bash
-docker compose down -v
-```
-
-O último comando remove permanentemente PostgreSQL, Redis, mídias e dados do Caddy.
-Não o execute em um ambiente com dados importantes.
+Não use `docker compose down -v`: esse comando remove os volumes persistentes do banco,
+Redis e arquivos de transcrição.
 
 ## Validação
 

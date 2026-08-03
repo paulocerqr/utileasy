@@ -55,7 +55,7 @@ A arquitetura recomendada é publicar o Utileazy exclusivamente pelo Cloudflare 
   - Remover a publicação da porta 3000 do frontend.
   - Adicionar Caddy sem ports, apenas disponível nas redes Docker.
   - Adicionar cloudflared, também sem portas publicadas.
-  - Fazer o Tunnel apontar para http://caddy:80.
+  - Fazer o Tunnel apontar para http://caddy:8080.
   - Fazer o Caddy encaminhar para http://frontend:3000.
   - Não expor 8000, 5432 ou 6379.
   - Manter worker solo, concorrência 1 e FFmpeg com um thread.
@@ -125,7 +125,7 @@ A arquitetura recomendada é publicar o Utileazy exclusivamente pelo Cloudflare 
   3. Criar somente um hostname público inicial.
   4. Apontar esse hostname para:
 
-  http://caddy:80
+  http://caddy:8080
 
   5. Executar cloudflared pelo Compose usando token em arquivo.
   6. Permitir saída TCP e UDP na porta 7844; o Tunnel não precisa de nenhuma porta de
@@ -181,23 +181,24 @@ A arquitetura recomendada é publicar o Utileazy exclusivamente pelo Cloudflare 
   A ferramenta dependerá do sistema operacional: UFW em Ubuntu/Debian, firewalld em outras
   distribuições ou regras nftables diretamente.
 
-  Política planejada:
+  Política aplicada no servidor Ubuntu:
 
   - Entrada: negar por padrão.
   - Encaminhamento: negar por padrão, exceto regras necessárias às redes Docker.
   - SSH: permitir somente pela interface Tailscale ou pelo IP/sub-rede administrativa.
   - Não permitir entrada em 80, 443, 3000, 8000, 5432 ou 6379.
-  - Saída: permitir DNS, NTP, HTTPS e Cloudflare Tunnel em TCP/UDP 7844.
+  - Saída para a Internet: permitir por padrão durante a estabilização, preservando DNS,
+    NTP, HTTPS, Tailscale e Cloudflare Tunnel.
   - Manter tráfego estabelecido/relacionado.
   - Bloquear tráfego lateral do servidor e dos containers para as demais redes privadas, com
     exceções explícitas.
 
   Docker e UFW exigem cuidado: portas publicadas pelo Docker podem ser desviadas antes das
-  regras normais do UFW. Por isso, a principal defesa será não publicar portas e complementar
-  com regras no caminho de encaminhamento do Docker. Docker e firewalls
-  (https://docs.docker.com/engine/networking/packet-filtering-firewalls/)
+  regras normais do UFW. Por isso, a principal defesa é não publicar portas e complementar
+  com regras na cadeia `DOCKER-USER`. Docker e firewalls
+  (https://docs.docker.com/engine/network/packet-filtering-firewalls/)
 
-  Também serão aplicados:
+  Também foram aplicados:
 
   - SSH somente por chave.
   - PermitRootLogin no.
@@ -205,6 +206,15 @@ A arquitetura recomendada é publicar o Utileazy exclusivamente pelo Cloudflare 
   - Usuário administrativo sem login direto como root.
   - Atualizações automáticas apenas de segurança, com janela controlada.
   - Nenhum container com Docker socket, modo privilegiado ou network_mode: host.
+
+  A instalação, persistência, verificação e recuperação dessas regras estão documentadas em
+  `deploy/host-firewall/README.md`. A validação incluiu reboot completo, recuperação dos oito
+  containers, Tunnel saudável e Caddy respondendo HTTP 200 internamente.
+
+  Permanecem dependentes do provedor: remover ou justificar regras de encaminhamento do
+  equipamento gerenciado, reservar o endereço DHCP, corrigir SNTP e implementar uma VLAN ou
+  ACL que isole o servidor da rede principal. O bloqueio no host é uma defesa adicional, não
+  substitui segmentação no roteador ou switch.
 
   ## Fase 6 — Publicação gradual
 
