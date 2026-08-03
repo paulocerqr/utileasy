@@ -222,7 +222,8 @@ A arquitetura recomendada é publicar o Utileazy exclusivamente pelo Cloudflare 
   2. Testar upload, polling, PDF, login e Turnstile.
   3. Subir Caddy internamente.
   4. Ativar Tunnel com Cloudflare Access restrito.
-  5. Operar por 24–48 horas observando CPU, RAM, temperatura, disco e filas.
+  5. Instalar o monitor de estabilização descrito em `deploy/phase6/README.md` e operar por
+     24–48 horas observando CPU, RAM, temperatura, disco, containers e filas.
   6. Testar upload próximo do limite permitido.
   7. Inicialmente manter polling.
   8. Depois de estabilizar o túnel, mudar para webhook, que reduz consultas à AssemblyAI.
