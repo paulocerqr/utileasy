@@ -232,7 +232,8 @@ A arquitetura recomendada é publicar o Utileazy exclusivamente pelo Cloudflare 
 
   ## Fase 7 — Testes de segurança obrigatórios
 
-  Antes da abertura:
+  O roteiro executável, os resultados esperados e as precauções estão documentados em
+  `deploy/phase7/README.md`. Antes da abertura:
 
   - Escanear o IP residencial de uma rede externa: nenhuma porta deve responder.
   - Escanear o servidor pela LAN: somente SSH administrativo, se permitido.
