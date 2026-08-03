@@ -1,0 +1,141 @@
+#!/bin/sh
+set -u
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+PUBLIC_DOMAIN=${PUBLIC_DOMAIN:-utileasy.com.br}
+EXPECTED_CONTAINERS=${EXPECTED_CONTAINERS:-"utilitydev-db utilitydev-redis utilitydev-backend utilitydev-worker utilitydev-beat utilitydev-frontend utilitydev-caddy-home utilitydev-cloudflared"}
+QUEUE_NAMES=${QUEUE_NAMES:-"media provider maintenance"}
+DISK_WARN_PERCENT=${DISK_WARN_PERCENT:-80}
+MEMORY_WARN_MIB=${MEMORY_WARN_MIB:-512}
+SWAP_WARN_MIB=${SWAP_WARN_MIB:-1024}
+QUEUE_WARN_LENGTH=${QUEUE_WARN_LENGTH:-5}
+TEMPERATURE_WARN_C=${TEMPERATURE_WARN_C:-85}
+
+snapshot_status=OK
+
+warn() {
+    snapshot_status=WARN
+    printf 'warning=%s\n' "$*"
+}
+
+numeric_or_zero() {
+    case "$1" in
+        ''|*[!0-9]*) printf '0\n' ;;
+        *) printf '%s\n' "$1" ;;
+    esac
+}
+
+printf 'utileazy_soak_snapshot timestamp=%s\n' "$(date --iso-8601=seconds)"
+printf 'uptime='
+uptime
+
+memory_available_mib=$(awk '/^MemAvailable:/ {print int($2 / 1024)}' /proc/meminfo)
+swap_total_mib=$(awk '/^SwapTotal:/ {print int($2 / 1024)}' /proc/meminfo)
+swap_free_mib=$(awk '/^SwapFree:/ {print int($2 / 1024)}' /proc/meminfo)
+swap_used_mib=$((swap_total_mib - swap_free_mib))
+printf 'memory_available_mib=%s swap_used_mib=%s swap_total_mib=%s\n' \
+    "$memory_available_mib" "$swap_used_mib" "$swap_total_mib"
+
+if [ "$memory_available_mib" -lt "$MEMORY_WARN_MIB" ]; then
+    warn "available_memory_below_${MEMORY_WARN_MIB}_mib"
+fi
+if [ "$swap_used_mib" -gt "$SWAP_WARN_MIB" ]; then
+    warn "swap_usage_above_${SWAP_WARN_MIB}_mib"
+fi
+
+disk_used_percent=$(df -P / | awk 'NR == 2 {gsub(/%/, "", $5); print $5}')
+disk_available_kib=$(df -Pk / | awk 'NR == 2 {print $4}')
+printf 'root_disk_used_percent=%s root_disk_available_kib=%s\n' \
+    "$disk_used_percent" "$disk_available_kib"
+if [ "$disk_used_percent" -ge "$DISK_WARN_PERCENT" ]; then
+    warn "root_disk_usage_at_or_above_${DISK_WARN_PERCENT}_percent"
+fi
+
+thermal_zones_found=0
+for temperature_file in /sys/class/thermal/thermal_zone*/temp; do
+    if [ ! -r "$temperature_file" ]; then
+        continue
+    fi
+    thermal_zones_found=1
+    zone_dir=${temperature_file%/temp}
+    zone_name=$(basename "$zone_dir")
+    zone_type=$(cat "$zone_dir/type" 2>/dev/null || printf 'unknown')
+    temperature_millic=$(cat "$temperature_file" 2>/dev/null || printf '0')
+    temperature_millic=$(numeric_or_zero "$temperature_millic")
+    temperature_c=$((temperature_millic / 1000))
+    printf 'temperature zone=%s type=%s celsius=%s\n' \
+        "$zone_name" "$zone_type" "$temperature_c"
+    if [ "$temperature_c" -ge "$TEMPERATURE_WARN_C" ]; then
+        warn "temperature_${zone_name}_at_or_above_${TEMPERATURE_WARN_C}_c"
+    fi
+done
+if [ "$thermal_zones_found" -eq 0 ]; then
+    printf 'temperature=unavailable\n'
+fi
+
+if ! docker info >/dev/null 2>&1; then
+    warn 'docker_unavailable'
+    printf 'snapshot_status=%s\n' "$snapshot_status"
+    exit 0
+fi
+
+for container_name in $EXPECTED_CONTAINERS; do
+    if ! docker inspect "$container_name" >/dev/null 2>&1; then
+        warn "container_${container_name}_missing"
+        continue
+    fi
+
+    container_state=$(docker inspect --format '{{.State.Status}}' "$container_name")
+    container_health=$(docker inspect --format \
+        '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
+        "$container_name")
+    container_restarts=$(docker inspect --format '{{.RestartCount}}' "$container_name")
+    printf 'container name=%s state=%s health=%s restarts=%s\n' \
+        "$container_name" "$container_state" "$container_health" "$container_restarts"
+
+    if [ "$container_state" != running ]; then
+        warn "container_${container_name}_not_running"
+    fi
+    if [ "$container_health" != none ] && [ "$container_health" != healthy ]; then
+        warn "container_${container_name}_health_${container_health}"
+    fi
+    if [ "$container_restarts" -gt 0 ]; then
+        warn "container_${container_name}_restart_count_${container_restarts}"
+    fi
+done
+
+printf '%s\n' 'docker_stats_begin'
+docker stats --no-stream \
+    --format 'container={{.Name}} cpu={{.CPUPerc}} memory={{.MemUsage}} memory_percent={{.MemPerc}}' \
+    $EXPECTED_CONTAINERS 2>&1 || warn 'docker_stats_failed'
+printf '%s\n' 'docker_stats_end'
+
+if docker inspect utilitydev-redis >/dev/null 2>&1 && \
+    [ "$(docker inspect --format '{{.State.Status}}' utilitydev-redis)" = running ]; then
+    for queue_name in $QUEUE_NAMES; do
+        queue_length=$(docker exec utilitydev-redis redis-cli --raw LLEN "$queue_name" 2>/dev/null || printf 'unknown')
+        printf 'celery_queue name=%s length=%s\n' "$queue_name" "$queue_length"
+        case "$queue_length" in
+            ''|*[!0-9]*) warn "queue_${queue_name}_unavailable" ;;
+            *)
+                if [ "$queue_length" -gt "$QUEUE_WARN_LENGTH" ]; then
+                    warn "queue_${queue_name}_above_${QUEUE_WARN_LENGTH}"
+                fi
+                ;;
+        esac
+    done
+else
+    warn 'redis_unavailable_for_queue_check'
+fi
+
+caddy_status=$(docker exec utilitydev-caddy-home \
+    curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+    --header "Host: $PUBLIC_DOMAIN" \
+    http://127.0.0.1:8080/login 2>/dev/null || printf 'unavailable')
+printf 'caddy_login_http_status=%s\n' "$caddy_status"
+if [ "$caddy_status" != 200 ]; then
+    warn "caddy_login_http_status_${caddy_status}"
+fi
+
+printf 'snapshot_status=%s\n' "$snapshot_status"

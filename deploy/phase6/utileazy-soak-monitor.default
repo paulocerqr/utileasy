@@ -1,0 +1,11 @@
+# Domínio enviado ao Caddy no teste interno. Não coloque segredos neste arquivo.
+PUBLIC_DOMAIN=utileasy.com.br
+
+EXPECTED_CONTAINERS="utilitydev-db utilitydev-redis utilitydev-backend utilitydev-worker utilitydev-beat utilitydev-frontend utilitydev-caddy-home utilitydev-cloudflared"
+QUEUE_NAMES="media provider maintenance"
+
+DISK_WARN_PERCENT=80
+MEMORY_WARN_MIB=512
+SWAP_WARN_MIB=1024
+QUEUE_WARN_LENGTH=5
+TEMPERATURE_WARN_C=85

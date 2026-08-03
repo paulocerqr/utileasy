@@ -1,0 +1,18 @@
+[Unit]
+Description=Utileasy phase 6 soak snapshot
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/utileazy-soak-monitor
+ExecStart=/usr/local/sbin/utileazy-soak-snapshot
+TimeoutStartSec=60
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictSUIDSGID=yes
