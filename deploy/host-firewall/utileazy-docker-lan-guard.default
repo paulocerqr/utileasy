@@ -1,0 +1,5 @@
+# Rede doméstica contra a qual os containers não podem iniciar conexões.
+LAN_CIDR=192.168.1.0/24
+
+# Confira estes valores com `docker network inspect` após recriar redes Docker.
+DOCKER_SUBNETS="172.18.0.0/16 172.19.0.0/16"

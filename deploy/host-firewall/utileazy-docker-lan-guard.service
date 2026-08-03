@@ -1,0 +1,14 @@
+[Unit]
+Description=Utileasy Docker LAN isolation
+Requires=docker.service
+After=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/utileazy-docker-lan-guard
+ExecStart=/bin/sh /usr/local/sbin/utileazy-docker-lan-guard
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
