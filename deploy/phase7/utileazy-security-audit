@@ -54,6 +54,8 @@ sshd -T | grep \
     -e '^passwordauthentication ' \
     -e '^pubkeyauthentication ' \
     -e '^kbdinteractiveauthentication ' \
+    -e '^hostbasedauthentication ' \
+    -e '^gssapiauthentication ' \
     -e '^authenticationmethods '
 printf '%s\n' 'ssh_effective_configuration_end'
 
@@ -64,6 +66,10 @@ printf '%s\n' "$sshd_effective" | grep -q '^passwordauthentication no$' || \
     warn 'ssh_password_authentication_not_disabled'
 printf '%s\n' "$sshd_effective" | grep -q '^pubkeyauthentication yes$' || \
     warn 'ssh_public_key_authentication_not_enabled'
+printf '%s\n' "$sshd_effective" | grep -q '^hostbasedauthentication no$' || \
+    warn 'ssh_host_based_authentication_not_disabled'
+printf '%s\n' "$sshd_effective" | grep -q '^gssapiauthentication no$' || \
+    warn 'ssh_gssapi_authentication_not_disabled'
 
 printf '%s\n' 'listening_sockets_begin'
 ss -lntup
@@ -131,7 +137,8 @@ printf '%s\n' 'docker_user_ipv6_begin'
 ip6tables -L DOCKER-USER -n -v --line-numbers 2>&1 || warn 'docker_user_ipv6_unavailable'
 printf '%s\n' 'docker_user_ipv6_end'
 
-django_security=$(docker exec utilitydev-backend python -c \
+django_security=$(docker exec utilitydev-backend \
+    env DJANGO_SETTINGS_MODULE=config.settings python -c \
     'from django.conf import settings; print("debug=%s secure_session=%s secure_csrf=%s session_httponly=%s session_samesite=%s csrf_samesite=%s trust_proxy=%s" % (settings.DEBUG, settings.SESSION_COOKIE_SECURE, settings.CSRF_COOKIE_SECURE, settings.SESSION_COOKIE_HTTPONLY, settings.SESSION_COOKIE_SAMESITE, settings.CSRF_COOKIE_SAMESITE, settings.DJANGO_TRUST_PROXY_HEADERS))' \
     2>&1 || true)
 printf 'django_security %s\n' "$django_security"
