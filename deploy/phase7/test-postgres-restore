@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+source_container=${SOURCE_CONTAINER:-utilitydev-db}
+restore_container=${RESTORE_CONTAINER:-utileazy-phase7-postgres-restore}
+postgres_image=${POSTGRES_IMAGE:-postgres:16-alpine}
+restore_tmpfs_size=${RESTORE_TMPFS_SIZE:-1g}
+restore_created=false
+
+cleanup() {
+    if [[ "$restore_created" == true ]]; then
+        docker rm --force "$restore_container" >/dev/null 2>&1 || true
+    fi
+}
+
+trap cleanup EXIT HUP INT TERM
+
+if docker inspect "$restore_container" >/dev/null 2>&1; then
+    printf 'error=restore_container_already_exists name=%s\n' "$restore_container" >&2
+    exit 1
+fi
+
+if ! docker inspect "$source_container" >/dev/null 2>&1; then
+    printf 'error=source_container_missing name=%s\n' "$source_container" >&2
+    exit 1
+fi
+
+source_state=$(docker inspect --format '{{.State.Status}}' "$source_container")
+if [[ "$source_state" != running ]]; then
+    printf 'error=source_container_not_running state=%s\n' "$source_state" >&2
+    exit 1
+fi
+
+source_db_user=$(docker exec "$source_container" printenv POSTGRES_USER)
+source_db_name=$(docker exec "$source_container" printenv POSTGRES_DB)
+
+printf 'restore_test=start source=%s target=%s image=%s\n' \
+    "$source_container" "$restore_container" "$postgres_image"
+
+docker run --detach \
+    --name "$restore_container" \
+    --network none \
+    --tmpfs "/var/lib/postgresql/data:rw,nosuid,nodev,size=$restore_tmpfs_size" \
+    --env POSTGRES_HOST_AUTH_METHOD=trust \
+    "$postgres_image" >/dev/null
+restore_created=true
+
+restore_ready=false
+for _ in $(seq 1 60); do
+    if docker exec "$restore_container" pg_isready --username postgres >/dev/null 2>&1; then
+        restore_ready=true
+        break
+    fi
+    sleep 1
+done
+
+if [[ "$restore_ready" != true ]]; then
+    printf '%s\n' 'error=temporary_postgres_not_ready' >&2
+    exit 1
+fi
+
+docker exec "$source_container" \
+    pg_dump \
+    --username "$source_db_user" \
+    --dbname "$source_db_name" \
+    --format custom | \
+docker exec --interactive "$restore_container" \
+    pg_restore \
+    --username postgres \
+    --dbname postgres \
+    --exit-on-error \
+    --no-owner \
+    --no-privileges
+
+source_table_count=$(docker exec "$source_container" \
+    psql --username "$source_db_user" --dbname "$source_db_name" \
+    --tuples-only --no-align \
+    --command "SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public';")
+restore_table_count=$(docker exec "$restore_container" \
+    psql --username postgres --dbname postgres \
+    --tuples-only --no-align \
+    --command "SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public';")
+
+source_migration_count=$(docker exec "$source_container" \
+    psql --username "$source_db_user" --dbname "$source_db_name" \
+    --tuples-only --no-align \
+    --command 'SELECT count(*) FROM django_migrations;')
+restore_migration_count=$(docker exec "$restore_container" \
+    psql --username postgres --dbname postgres \
+    --tuples-only --no-align \
+    --command 'SELECT count(*) FROM django_migrations;')
+
+printf 'restore_test=counts source_tables=%s restored_tables=%s source_migrations=%s restored_migrations=%s\n' \
+    "$source_table_count" "$restore_table_count" \
+    "$source_migration_count" "$restore_migration_count"
+
+if [[ "$source_table_count" != "$restore_table_count" ]] || \
+    [[ "$source_migration_count" != "$restore_migration_count" ]]; then
+    printf '%s\n' 'restore_test_status=FAIL' >&2
+    exit 1
+fi
+
+printf '%s\n' 'restore_test_status=OK'

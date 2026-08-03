@@ -1,0 +1,151 @@
+#!/bin/sh
+set -u
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+EXPECTED_CONTAINERS=${EXPECTED_CONTAINERS:-"utilitydev-db utilitydev-redis utilitydev-backend utilitydev-worker utilitydev-beat utilitydev-frontend utilitydev-caddy-home utilitydev-cloudflared"}
+PUBLIC_DOMAIN=${PUBLIC_DOMAIN:-utileasy.com.br}
+
+audit_status=OK
+
+warn() {
+    audit_status=WARN
+    printf 'warning=%s\n' "$*"
+}
+
+if [ "$(id -u)" -ne 0 ]; then
+    printf '%s\n' 'error=execute_with_sudo'
+    exit 2
+fi
+
+printf 'utileazy_security_audit timestamp=%s\n' "$(date --iso-8601=seconds)"
+
+printf '%s\n' 'system_services_begin'
+for service_name in \
+    ufw.service \
+    ssh.service \
+    docker.service \
+    tailscaled.service \
+    unattended-upgrades.service \
+    utileazy-docker-lan-guard.service \
+    utileazy-soak-check.timer; do
+    service_state=$(systemctl is-active "$service_name" 2>/dev/null || true)
+    printf 'service name=%s state=%s\n' "$service_name" "$service_state"
+    if [ "$service_state" != active ]; then
+        warn "service_${service_name}_not_active"
+    fi
+done
+printf '%s\n' 'system_services_end'
+
+printf '%s\n' 'ufw_begin'
+ufw_output=$(ufw status verbose 2>&1)
+printf '%s\n' "$ufw_output"
+printf '%s\n' 'ufw_end'
+printf '%s\n' "$ufw_output" | grep -q '^Status: active$' || warn 'ufw_not_active'
+printf '%s\n' "$ufw_output" | grep -q 'Default: deny (incoming)' || \
+    warn 'ufw_incoming_policy_not_deny'
+printf '%s\n' "$ufw_output" | grep -q 'deny (routed)' || \
+    warn 'ufw_routed_policy_not_deny'
+
+printf '%s\n' 'ssh_effective_configuration_begin'
+sshd -T | grep \
+    -e '^port ' \
+    -e '^listenaddress ' \
+    -e '^permitrootlogin ' \
+    -e '^passwordauthentication ' \
+    -e '^pubkeyauthentication ' \
+    -e '^kbdinteractiveauthentication ' \
+    -e '^authenticationmethods '
+printf '%s\n' 'ssh_effective_configuration_end'
+
+sshd_effective=$(sshd -T)
+printf '%s\n' "$sshd_effective" | grep -q '^permitrootlogin no$' || \
+    warn 'ssh_root_login_not_disabled'
+printf '%s\n' "$sshd_effective" | grep -q '^passwordauthentication no$' || \
+    warn 'ssh_password_authentication_not_disabled'
+printf '%s\n' "$sshd_effective" | grep -q '^pubkeyauthentication yes$' || \
+    warn 'ssh_public_key_authentication_not_enabled'
+
+printf '%s\n' 'listening_sockets_begin'
+ss -lntup
+printf '%s\n' 'listening_sockets_end'
+
+if ! docker info >/dev/null 2>&1; then
+    warn 'docker_unavailable'
+    printf 'audit_status=%s\n' "$audit_status"
+    exit 0
+fi
+
+for container_name in $EXPECTED_CONTAINERS; do
+    if ! docker inspect "$container_name" >/dev/null 2>&1; then
+        warn "container_${container_name}_missing"
+        continue
+    fi
+
+    container_state=$(docker inspect --format '{{.State.Status}}' "$container_name")
+    container_health=$(docker inspect --format \
+        '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
+        "$container_name")
+    container_restarts=$(docker inspect --format '{{.RestartCount}}' "$container_name")
+    privileged=$(docker inspect --format '{{.HostConfig.Privileged}}' "$container_name")
+    network_mode=$(docker inspect --format '{{.HostConfig.NetworkMode}}' "$container_name")
+    pid_mode=$(docker inspect --format '{{.HostConfig.PidMode}}' "$container_name")
+    port_bindings=$(docker inspect --format '{{json .HostConfig.PortBindings}}' "$container_name")
+    cap_add=$(docker inspect --format '{{json .HostConfig.CapAdd}}' "$container_name")
+    docker_socket=$(docker inspect --format \
+        '{{range .Mounts}}{{if eq .Destination "/var/run/docker.sock"}}yes{{end}}{{end}}' \
+        "$container_name")
+
+    printf 'container name=%s state=%s health=%s restarts=%s privileged=%s network=%s pid=%s ports=%s cap_add=%s docker_socket=%s\n' \
+        "$container_name" "$container_state" "$container_health" \
+        "$container_restarts" "$privileged" "$network_mode" "$pid_mode" \
+        "$port_bindings" "$cap_add" "${docker_socket:-no}"
+
+    if [ "$container_state" != running ]; then
+        warn "container_${container_name}_not_running"
+    fi
+    if [ "$container_health" != none ] && [ "$container_health" != healthy ]; then
+        warn "container_${container_name}_health_${container_health}"
+    fi
+    if [ "$privileged" != false ]; then
+        warn "container_${container_name}_privileged"
+    fi
+    if [ "$network_mode" = host ]; then
+        warn "container_${container_name}_uses_host_network"
+    fi
+    if [ -n "$pid_mode" ]; then
+        warn "container_${container_name}_uses_pid_mode_${pid_mode}"
+    fi
+    if [ "$port_bindings" != '{}' ] && [ "$port_bindings" != null ]; then
+        warn "container_${container_name}_publishes_ports"
+    fi
+    if [ "${docker_socket:-no}" = yes ]; then
+        warn "container_${container_name}_mounts_docker_socket"
+    fi
+done
+
+printf '%s\n' 'docker_user_ipv4_begin'
+iptables -L DOCKER-USER -n -v --line-numbers 2>&1 || warn 'docker_user_ipv4_unavailable'
+printf '%s\n' 'docker_user_ipv4_end'
+
+printf '%s\n' 'docker_user_ipv6_begin'
+ip6tables -L DOCKER-USER -n -v --line-numbers 2>&1 || warn 'docker_user_ipv6_unavailable'
+printf '%s\n' 'docker_user_ipv6_end'
+
+django_security=$(docker exec utilitydev-backend python -c \
+    'from django.conf import settings; print("debug=%s secure_session=%s secure_csrf=%s session_httponly=%s session_samesite=%s csrf_samesite=%s trust_proxy=%s" % (settings.DEBUG, settings.SESSION_COOKIE_SECURE, settings.CSRF_COOKIE_SECURE, settings.SESSION_COOKIE_HTTPONLY, settings.SESSION_COOKIE_SAMESITE, settings.CSRF_COOKIE_SAMESITE, settings.DJANGO_TRUST_PROXY_HEADERS))' \
+    2>&1 || true)
+printf 'django_security %s\n' "$django_security"
+printf '%s\n' "$django_security" | grep -q \
+    'debug=False secure_session=True secure_csrf=True session_httponly=True session_samesite=Lax csrf_samesite=Lax trust_proxy=True' || \
+    warn 'django_security_settings_unexpected'
+
+caddy_status=$(docker exec utilitydev-caddy-home \
+    curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+    --header "Host: $PUBLIC_DOMAIN" \
+    http://127.0.0.1:8080/login 2>/dev/null || printf 'unavailable')
+printf 'caddy_login_http_status=%s\n' "$caddy_status"
+if [ "$caddy_status" != 200 ]; then
+    warn "caddy_login_http_status_${caddy_status}"
+fi
+
+printf 'audit_status=%s\n' "$audit_status"
