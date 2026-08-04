@@ -1,0 +1,58 @@
+#!/bin/sh
+set -eu
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+backend_container=${BACKEND_CONTAINER:-utilitydev-backend}
+
+if ! docker inspect "$backend_container" >/dev/null 2>&1; then
+    printf 'error=backend_container_missing name=%s\n' "$backend_container" >&2
+    exit 1
+fi
+
+docker exec --interactive "$backend_container" python - <<'PY'
+import os
+import sys
+
+import requests
+
+secret = os.environ.get("ASSEMBLYAI_WEBHOOK_SECRET", "")
+if not secret:
+    print("error=webhook_secret_not_configured", file=sys.stderr)
+    raise SystemExit(1)
+
+public_domain = os.environ.get("PUBLIC_DOMAIN", "utileasy.com.br")
+url = (
+    "http://caddy:8080/api/webhooks/assemblyai/"
+    "00000000-0000-0000-0000-000000000000/"
+)
+payload = {"transcript_id": "phase7-security-test"}
+base_headers = {"Host": public_domain}
+
+invalid_headers = dict(base_headers)
+invalid_headers["X-AssemblyAI-Webhook-Secret"] = "invalid"
+
+valid_headers = dict(base_headers)
+valid_headers["X-AssemblyAI-Webhook-Secret"] = secret
+
+invalid = requests.post(
+    url,
+    json=payload,
+    headers=invalid_headers,
+    timeout=10,
+)
+valid = requests.post(
+    url,
+    json=payload,
+    headers=valid_headers,
+    timeout=10,
+)
+
+print(f"invalid_status={invalid.status_code}")
+print(f"valid_unknown_job_status={valid.status_code}")
+
+if invalid.status_code != 401 or valid.status_code != 404:
+    print("webhook_test_status=FAIL", file=sys.stderr)
+    raise SystemExit(1)
+
+print("webhook_test_status=OK")
+PY

@@ -136,36 +136,12 @@ Com o site ainda em polling e protegido pelo Access, teste o caminho interno com
 um UUID inexistente. O segredo correto é lido dentro do container e não aparece no histórico:
 
 ```bash
-docker exec utilitydev-backend python -c '
-import os
-import requests
-
-url = "http://caddy:8080/api/webhooks/assemblyai/00000000-0000-0000-0000-000000000000/"
-payload = {"transcript_id": "phase7-security-test"}
-base_headers = {"Host": "utileasy.com.br"}
-
-invalid = requests.post(
-    url,
-    json=payload,
-    headers={**base_headers, "X-AssemblyAI-Webhook-Secret": "invalid"},
-    timeout=10,
-)
-valid = requests.post(
-    url,
-    json=payload,
-    headers={
-        **base_headers,
-        "X-AssemblyAI-Webhook-Secret": os.environ["ASSEMBLYAI_WEBHOOK_SECRET"],
-    },
-    timeout=10,
-)
-print("invalid_status=", invalid.status_code)
-print("valid_unknown_job_status=", valid.status_code)
-'
+deploy/phase7/test-webhook-auth
 ```
 
-O esperado é `invalid_status=401` e `valid_unknown_job_status=404`. Nenhum trabalho é
-criado ou alterado. O Caddy remove esse header dos logs.
+O esperado é `invalid_status=401`, `valid_unknown_job_status=404` e
+`webhook_test_status=OK`. Nenhum trabalho é criado ou alterado. O Caddy remove esse header
+dos logs.
 
 ## 8. Restauração isolada do PostgreSQL
 
