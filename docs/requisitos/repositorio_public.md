@@ -73,7 +73,7 @@
 
   - Adicionar CI rodando backend, TypeScript e build.
   - Melhorar a página inicial do README com arquitetura, screenshots, URL da demonstração e decisões técnicas.
-  - Incluir política de privacidade simples, explicando que áudios são enviados à AssemblyAI, resultados anônimos expiram e resultados autenticados são persistidos.
+  - Incluir política de privacidade simples, explicando que áudios são enviados à AssemblyAI e apagados do provedor após o resultado, resultados anônimos expiram em 24 horas e resultados autenticados em 180 dias.
   - Mesclar server-main na branch principal por PR, mostrando um fluxo profissional.
 
   Minha conclusão: as dependências e o tratamento local de `.env` foram

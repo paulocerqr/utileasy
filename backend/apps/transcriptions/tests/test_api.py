@@ -29,7 +29,8 @@ class TranscriptionApiTests(TestCase):
         super().tearDownClass()
         shutil.rmtree(TEST_MEDIA_ROOT, ignore_errors=True)
 
-    def test_upload_creates_persistent_job(self):
+    @override_settings(AUTHENTICATED_RESULT_TTL_DAYS=180)
+    def test_upload_creates_job_with_authenticated_retention(self):
         upload = SimpleUploadedFile("meeting.mp3", b"fake audio", content_type="audio/mpeg")
         with patch("apps.transcriptions.views.process_transcription.delay") as enqueue:
             with self.captureOnCommitCallbacks(execute=True):
@@ -44,6 +45,8 @@ class TranscriptionApiTests(TestCase):
         self.assertEqual(job.status, Transcricao.Status.QUEUED)
         self.assertEqual(job.owner, self.user)
         self.assertEqual(job.nome_original, "meeting.mp3")
+        expected_expiration = timezone.now() + timedelta(days=180)
+        self.assertLess(abs(job.expira_em - expected_expiration), timedelta(seconds=5))
         enqueue.assert_called_once_with(job.pk)
 
     def test_rejects_unsupported_extension(self):
@@ -163,7 +166,8 @@ class TranscriptionApiTests(TestCase):
         self.assertEqual(job.owner, self.user)
         self.assertIsNone(job.anonymous_session_id)
         self.assertEqual(job.access_token_hash, "")
-        self.assertIsNone(job.expira_em)
+        expected_expiration = timezone.now() + timedelta(days=180)
+        self.assertLess(abs(job.expira_em - expected_expiration), timedelta(seconds=5))
 
     def test_invalid_captcha_does_not_consume_daily_anonymous_limits(self):
         self.client.logout()
@@ -214,3 +218,23 @@ class TranscriptionApiTests(TestCase):
         response = self.client.get(reverse("transcriptions:create"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual([item["id"] for item in response.json()], [str(own_job.public_id)])
+
+    def test_expired_authenticated_job_is_hidden_and_inaccessible(self):
+        expired_job = Transcricao.objects.create(
+            owner=self.user,
+            nome_original="expired.mp3",
+            tipo_origem=Transcricao.TipoOrigem.AUDIO,
+            expira_em=timezone.now() - timedelta(seconds=1),
+        )
+
+        history = self.client.get(reverse("transcriptions:create"))
+        detail = self.client.get(
+            reverse(
+                "transcriptions:detail",
+                kwargs={"public_id": expired_job.public_id},
+            )
+        )
+
+        self.assertEqual(history.status_code, 200)
+        self.assertNotIn(str(expired_job.public_id), [item["id"] for item in history.json()])
+        self.assertEqual(detail.status_code, 404)

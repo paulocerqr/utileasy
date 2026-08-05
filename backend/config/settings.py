@@ -176,7 +176,10 @@ CELERY_TASK_ROUTES = {
     "apps.transcriptions.tasks.poll_transcription": {"queue": "provider"},
     "apps.transcriptions.tasks.finalize_transcription": {"queue": "provider"},
     "apps.transcriptions.tasks.reconcile_stale_transcriptions": {"queue": "maintenance"},
+    "apps.transcriptions.tasks.reconcile_provider_deletions": {"queue": "maintenance"},
+    "apps.transcriptions.tasks.delete_provider_transcription": {"queue": "maintenance"},
     "apps.transcriptions.tasks.cleanup_orphaned_files": {"queue": "maintenance"},
+    "apps.transcriptions.tasks.purge_expired_transcription_data": {"queue": "maintenance"},
     "apps.transcriptions.tasks.purge_expired_anonymous_data": {"queue": "maintenance"},
 }
 CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.getenv("CELERY_MAX_TASKS_PER_CHILD", "50"))
@@ -190,6 +193,9 @@ TRANSCRIPTION_DAILY_BUDGET_SECONDS = int(
     os.getenv("TRANSCRIPTION_DAILY_BUDGET_SECONDS", "14400")
 )
 ANONYMOUS_RESULT_TTL_HOURS = int(os.getenv("ANONYMOUS_RESULT_TTL_HOURS", "24"))
+AUTHENTICATED_RESULT_TTL_DAYS = int(
+    os.getenv("AUTHENTICATED_RESULT_TTL_DAYS", "180")
+)
 ANONYMOUS_COOKIE_NAME = os.getenv("ANONYMOUS_COOKIE_NAME", "utileazy_anon")
 ANONYMOUS_COOKIE_MAX_AGE = ANONYMOUS_RESULT_TTL_HOURS * 3600
 ANON_IP_BURST_LIMIT = int(os.getenv("ANON_IP_BURST_LIMIT", "2"))
@@ -212,6 +218,8 @@ TRANSCRIPTION_RECONCILE_AFTER_SECONDS = int(
 
 if TRANSCRIPTION_COMPLETION_MODE not in {"polling", "webhook"}:
     raise ValueError("TRANSCRIPTION_COMPLETION_MODE deve ser 'polling' ou 'webhook'.")
+if AUTHENTICATED_RESULT_TTL_DAYS <= 0:
+    raise ValueError("AUTHENTICATED_RESULT_TTL_DAYS deve ser maior que zero.")
 if TRANSCRIPTION_COMPLETION_MODE == "webhook" and (
     not PUBLIC_BASE_URL or not ASSEMBLYAI_WEBHOOK_SECRET
 ):
@@ -226,8 +234,12 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.transcriptions.tasks.cleanup_orphaned_files",
         "schedule": 3600.0,
     },
-    "purge-expired-anonymous-data": {
-        "task": "apps.transcriptions.tasks.purge_expired_anonymous_data",
+    "purge-expired-transcription-data": {
+        "task": "apps.transcriptions.tasks.purge_expired_transcription_data",
+        "schedule": 3600.0,
+    },
+    "reconcile-provider-deletions": {
+        "task": "apps.transcriptions.tasks.reconcile_provider_deletions",
         "schedule": 3600.0,
     },
 }

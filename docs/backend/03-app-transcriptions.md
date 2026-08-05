@@ -169,7 +169,9 @@ O canônico é removido depois da submissão.
 
 `poll_transcription` consulta periodicamente no modo caseiro. No modo VPS, o webhook
 agenda `finalize_transcription`. Ambos usam a mesma regra para persistir texto,
-concluir todos os jobs autorizados que apontam para o artefato ou propagar falha.
+concluir todos os jobs autorizados que apontam para o artefato ou propagar falha. Após
+um estado terminal, a exclusão da transcrição na AssemblyAI é agendada; uma tarefa
+horária reconcilia exclusões pendentes sem apagar o resultado local em caso de falha.
 
 ### Fila maintenance
 
@@ -234,6 +236,7 @@ TRANSCRIPTION_MAX_PENDING_PER_USER=2
 TRANSCRIPTION_MAX_PENDING_PER_ANON=1
 TRANSCRIPTION_DAILY_BUDGET_SECONDS=14400
 ANONYMOUS_RESULT_TTL_HOURS=24
+AUTHENTICATED_RESULT_TTL_DAYS=180
 ANON_IP_BURST_LIMIT=2
 ANON_IP_DAILY_LIMIT=10
 ANON_COOKIE_DAILY_LIMIT=3

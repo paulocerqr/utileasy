@@ -76,3 +76,16 @@ class AssemblyAIClient:
             return response.json()
         except (requests.RequestException, ValueError) as exc:
             raise AssemblyAIError("Falha ao consultar a transcrição na AssemblyAI.") from exc
+
+    def delete_transcription(self, transcription_id):
+        try:
+            response = requests.delete(
+                f"{self.base_url}/transcript/{transcription_id}",
+                headers=self.headers,
+                timeout=(15, 60),
+            )
+            if response.status_code == 404:
+                return
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            raise AssemblyAIError("Falha ao excluir a transcrição da AssemblyAI.") from exc

@@ -33,7 +33,8 @@ todos        capacidade simultânea + cota diária global de segundos
 ```
 
 Cookies e tokens anônimos são persistidos somente como SHA-256. Jobs temporários
-expiram em 24 horas; login antes da expiração permite reivindicá-los. O rate limit de
+expiram em 24 horas; login antes da expiração permite reivindicá-los por 180 dias.
+Jobs autenticados também expiram em 180 dias, contados desde a criação ou claim. O rate limit de
 aplicação mitiga abuso, mas proteção contra DDoS continua sendo responsabilidade da
 borda e infraestrutura.
 
@@ -54,7 +55,7 @@ POST autenticado ou anônimo
   -> artefato novo: fila provider e AssemblyAI
   -> polling ou webhook
   -> texto salvo no TranscriptionArtifact e jobs concluídos
-  -> temporários removidos
+  -> temporários removidos e exclusão agendada na AssemblyAI
 ```
 
 A deduplicação usa `(SHA-256 do MP3 canônico, configuration_hash)`. O artefato não
@@ -66,7 +67,7 @@ metadados entre usuários.
 ```text
 media        CPU/disco
 provider     rede e conclusão
-maintenance reconciliação, arquivos órfãos e expiração anônima
+maintenance reconciliação, exclusão no provedor, arquivos órfãos e expiração
 ```
 
 Casa usa um worker solo. VPS separa media de provider/maintenance. Todos os perfis

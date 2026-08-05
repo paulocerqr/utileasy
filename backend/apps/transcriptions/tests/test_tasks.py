@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -7,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from apps.transcriptions.models import (
     Audio,
@@ -16,8 +18,11 @@ from apps.transcriptions.models import (
 )
 from apps.transcriptions.tasks import (
     PIPELINE_VERSION,
+    _apply_provider_result,
     _configuration_hash,
+    delete_provider_transcription,
     process_transcription,
+    purge_expired_transcription_data,
     submit_transcription,
 )
 
@@ -104,6 +109,110 @@ class TranscriptionTaskTests(TestCase):
             "https://upload.test/audio", webhook_url=None, webhook_secret=None
         )
         schedule_poll.assert_called_once()
+
+    def test_terminal_result_is_saved_before_provider_deletion_is_enqueued(self):
+        audio = Audio.objects.create(hash="f" * 64, filename="terminal.mp3")
+        artifact = TranscriptionArtifact.objects.create(
+            audio=audio,
+            configuration_hash=_configuration_hash(),
+            pipeline_version=PIPELINE_VERSION,
+            provider_transcription_id="provider-terminal",
+        )
+        job = Transcricao.objects.create(
+            owner=self.user,
+            audio=audio,
+            artifact=artifact,
+            nome_original="terminal.mp3",
+            tipo_origem=Transcricao.TipoOrigem.AUDIO,
+            status=Transcricao.Status.PROCESSING,
+            provider_transcription_id="provider-terminal",
+        )
+
+        with patch(
+            "apps.transcriptions.tasks.delete_provider_transcription.delay"
+        ) as enqueue_delete:
+            terminal = _apply_provider_result(
+                job,
+                {"status": "completed", "text": "Texto persistido localmente"},
+            )
+
+        artifact.refresh_from_db()
+        job.refresh_from_db()
+        self.assertTrue(terminal)
+        self.assertEqual(artifact.transcript_text, "Texto persistido localmente")
+        self.assertEqual(job.status, Transcricao.Status.COMPLETED)
+        enqueue_delete.assert_called_once_with("provider-terminal")
+
+    def test_provider_deletion_clears_local_provider_identifiers(self):
+        audio = Audio.objects.create(hash="1" * 64, filename="delete.mp3")
+        artifact = TranscriptionArtifact.objects.create(
+            audio=audio,
+            configuration_hash=_configuration_hash(),
+            pipeline_version=PIPELINE_VERSION,
+            status=TranscriptionArtifact.Status.COMPLETED,
+            provider_transcription_id="provider-delete",
+        )
+        job = Transcricao.objects.create(
+            owner=self.user,
+            audio=audio,
+            artifact=artifact,
+            nome_original="delete.mp3",
+            tipo_origem=Transcricao.TipoOrigem.AUDIO,
+            status=Transcricao.Status.COMPLETED,
+            provider_transcription_id="provider-delete",
+        )
+
+        with patch("apps.transcriptions.tasks.AssemblyAIClient") as client_class:
+            result = delete_provider_transcription.run("provider-delete")
+
+        artifact.refresh_from_db()
+        job.refresh_from_db()
+        client_class.return_value.delete_transcription.assert_called_once_with(
+            "provider-delete"
+        )
+        self.assertEqual(result, "provider-delete")
+        self.assertIsNone(artifact.provider_transcription_id)
+        self.assertIsNone(job.provider_transcription_id)
+
+    def test_expiration_keeps_shared_artifact_until_last_job_is_removed(self):
+        audio = Audio.objects.create(hash="2" * 64, filename="retention.mp3")
+        artifact = TranscriptionArtifact.objects.create(
+            audio=audio,
+            configuration_hash=_configuration_hash(),
+            pipeline_version=PIPELINE_VERSION,
+            status=TranscriptionArtifact.Status.COMPLETED,
+            transcript_text="Texto compartilhado",
+        )
+        expired_job = Transcricao.objects.create(
+            owner=self.user,
+            audio=audio,
+            artifact=artifact,
+            nome_original="expired.mp3",
+            tipo_origem=Transcricao.TipoOrigem.AUDIO,
+            status=Transcricao.Status.COMPLETED,
+            expira_em=timezone.now() - timedelta(seconds=1),
+        )
+        active_job = Transcricao.objects.create(
+            owner=self.other_user,
+            audio=audio,
+            artifact=artifact,
+            nome_original="active.mp3",
+            tipo_origem=Transcricao.TipoOrigem.AUDIO,
+            status=Transcricao.Status.COMPLETED,
+            expira_em=timezone.now() + timedelta(days=1),
+        )
+
+        self.assertEqual(purge_expired_transcription_data.run(), 1)
+        self.assertFalse(Transcricao.objects.filter(pk=expired_job.pk).exists())
+        self.assertTrue(TranscriptionArtifact.objects.filter(pk=artifact.pk).exists())
+        self.assertTrue(Audio.objects.filter(pk=audio.pk).exists())
+
+        Transcricao.objects.filter(pk=active_job.pk).update(
+            expira_em=timezone.now() - timedelta(seconds=1)
+        )
+        self.assertEqual(purge_expired_transcription_data.run(), 1)
+        self.assertFalse(TranscriptionArtifact.objects.filter(pk=artifact.pk).exists())
+        self.assertFalse(Audio.objects.filter(pk=audio.pk).exists())
 
     def test_completed_artifact_is_reused_without_exposing_another_job(self):
         audio = Audio.objects.create(

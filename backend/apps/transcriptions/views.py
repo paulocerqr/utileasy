@@ -57,9 +57,11 @@ def _authorized_job(request, public_id):
     )
     if not job:
         return None
+    if job.expira_em and job.expira_em <= timezone.now():
+        return None
     if job.owner_id:
         return job if request.user.is_authenticated and job.owner_id == request.user.pk else None
-    if not job.expira_em or job.expira_em <= timezone.now():
+    if not job.expira_em:
         return None
     supplied_token = request.headers.get("X-Job-Token", "")
     if not supplied_token or not secrets.compare_digest(
@@ -103,7 +105,10 @@ class TranscriptionCreateView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
         jobs = (
-            Transcricao.objects.filter(owner=request.user)
+            Transcricao.objects.filter(
+                owner=request.user,
+                expira_em__gt=timezone.now(),
+            )
             .select_related("artifact", "duplicate_of")
             .order_by("-criado_em")[:100]
         )
@@ -197,7 +202,8 @@ class TranscriptionCreateView(APIView):
                         timezone.now()
                         + timedelta(hours=settings.ANONYMOUS_RESULT_TTL_HOURS)
                         if anonymous_session
-                        else None
+                        else timezone.now()
+                        + timedelta(days=settings.AUTHENTICATED_RESULT_TTL_DAYS)
                     ),
                     nome_original=safe_original_name,
                     tipo_origem=source_kind,
@@ -262,6 +268,8 @@ class TranscriptionClaimView(APIView):
                 job = Transcricao.objects.select_for_update().get(public_id=public_id)
             except Transcricao.DoesNotExist:
                 return _not_found()
+            if job.expira_em <= timezone.now():
+                return _not_found()
             if job.owner_id:
                 if job.owner_id == request.user.pk:
                     return Response(TranscricaoSerializer(job).data)
@@ -276,7 +284,9 @@ class TranscriptionClaimView(APIView):
             job.owner = request.user
             job.anonymous_session = None
             job.access_token_hash = ""
-            job.expira_em = None
+            job.expira_em = timezone.now() + timedelta(
+                days=settings.AUTHENTICATED_RESULT_TTL_DAYS
+            )
             job.save(
                 update_fields=[
                     "owner",

@@ -58,13 +58,14 @@ repetem o segredo. Usuários logados acessam somente jobs em que `owner` corresp
 sessão. Em ambos os casos, falha de autorização responde 404 para não revelar UUIDs.
 
 O endpoint `claim` exige login, CSRF e o `X-Job-Token` ainda válido. Em sucesso,
-define o usuário como proprietário e remove expiração e credenciais anônimas.
+define o usuário como proprietário, remove as credenciais anônimas e troca o prazo
+temporário pelo prazo autenticado de 180 dias.
 
 Campos adicionais da resposta:
 
 ```text
-anonymous   indica modo temporário
-expires_at  instante de expiração, nulo para job persistente
+anonymous   indica se o job usa credencial anônima
+expires_at  instante em que o resultado deixa de estar disponível
 ```
 
 Falhas comuns:
@@ -102,6 +103,9 @@ X-AssemblyAI-Webhook-Secret: <segredo>
 
 O callback é público, valida segredo e IDs, é idempotente e apenas agenda a consulta
 definitiva à AssemblyAI. O texto recebido no payload não é confiado diretamente.
+Depois de salvar localmente um resultado terminal, uma tarefa idempotente exclui a
+transcrição e o upload associado da AssemblyAI. Uma reconciliação horária repete a
+operação caso a fila ou o provedor estivessem indisponíveis.
 
 ## Camadas
 

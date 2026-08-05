@@ -69,7 +69,7 @@ tipo_origem                    audio ou video
 arquivo_temporario             chave do upload no storage
 arquivo_processado             chave do MP3 canônico temporário
 access_token_hash              hash do segredo anônimo
-expira_em                      expiração do resultado anônimo
+expira_em                      expiração do resultado anônimo ou autenticado
 quota_date
 quota_reserved_seconds
 status
@@ -110,9 +110,11 @@ transacionais impedem dois workers de ultrapassarem a cota global ao mesmo tempo
 
 ## Arquivos não ficam no banco
 
-Uploads e MP3s canônicos ficam no backend de storage selecionado. O banco guarda
-somente suas chaves. O texto final permanece no PostgreSQL; PDFs são gerados em
-memória e não são persistidos.
+Uploads e MP3s canônicos ficam temporariamente no backend de storage selecionado. O
+banco guarda somente suas chaves durante o pipeline. O texto final permanece no
+PostgreSQL por 24 horas no modo anônimo ou 180 dias no modo autenticado; PDFs são
+gerados em memória e não são persistidos. A limpeza remove também artefatos e metadados
+de áudio quando deixam de ser referenciados.
 
 ## Migrations
 

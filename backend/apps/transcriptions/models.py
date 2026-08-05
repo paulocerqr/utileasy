@@ -1,8 +1,16 @@
 import uuid
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.utils import timezone
+
+
+def default_authenticated_result_expiration():
+    return timezone.now() + timedelta(
+        days=getattr(settings, "AUTHENTICATED_RESULT_TTL_DAYS", 180)
+    )
 
 
 class Audio(models.Model):
@@ -149,7 +157,10 @@ class Transcricao(models.Model):
     arquivo_temporario = models.CharField(max_length=500, blank=True)
     arquivo_processado = models.CharField(max_length=500, blank=True)
     access_token_hash = models.CharField(max_length=64, blank=True)
-    expira_em = models.DateTimeField(null=True, blank=True, db_index=True)
+    expira_em = models.DateTimeField(
+        default=default_authenticated_result_expiration,
+        db_index=True,
+    )
     quota_date = models.DateField(null=True, blank=True)
     quota_reserved_seconds = models.PositiveIntegerField(default=0)
     status = models.CharField(

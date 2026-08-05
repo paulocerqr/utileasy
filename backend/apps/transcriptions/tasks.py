@@ -159,6 +159,17 @@ def _mark_artifact_failed(artifact, primary_job, message):
     _release_daily_budget(primary_job.pk)
 
 
+def _schedule_provider_deletion(provider_id):
+    if not provider_id:
+        return
+    try:
+        delete_provider_transcription.delay(provider_id)
+    except Exception:
+        logger.exception(
+            "Could not enqueue deletion of provider transcription %s", provider_id
+        )
+
+
 def _apply_provider_result(job, result):
     artifact = job.artifact
     if not artifact:
@@ -182,6 +193,7 @@ def _apply_provider_result(job, result):
             atualizado_em=now,
         )
         _consume_daily_budget(job.pk)
+        _schedule_provider_deletion(artifact.provider_transcription_id)
         return True
     if provider_status == "error":
         _mark_artifact_failed(
@@ -190,6 +202,7 @@ def _apply_provider_result(job, result):
             result.get("error")
             or "A AssemblyAI não conseguiu transcrever o arquivo.",
         )
+        _schedule_provider_deletion(artifact.provider_transcription_id)
         return True
     return False
 
@@ -217,6 +230,7 @@ def _apply_legacy_provider_result(job, result):
             atualizado_em=now,
         )
         _consume_daily_budget(job.pk)
+        _schedule_provider_deletion(job.provider_transcription_id)
         return True
     if provider_status == "error":
         _mark_job_failed(
@@ -224,6 +238,7 @@ def _apply_legacy_provider_result(job, result):
             result.get("error")
             or "A AssemblyAI não conseguiu transcrever o arquivo.",
         )
+        _schedule_provider_deletion(job.provider_transcription_id)
         return True
     return False
 
@@ -447,6 +462,7 @@ def poll_transcription(self, transcricao_id):
                 _mark_artifact_failed(job.artifact, job, str(exc))
             else:
                 _mark_job_failed(job, str(exc))
+            _schedule_provider_deletion(provider_id)
             return
         raise self.retry(exc=exc, countdown=settings.ASSEMBLYAI_POLL_INTERVAL)
 
@@ -458,6 +474,7 @@ def poll_transcription(self, transcricao_id):
             _mark_artifact_failed(job.artifact, job, message)
         else:
             _mark_job_failed(job, message)
+        _schedule_provider_deletion(provider_id)
         return
     raise self.retry(countdown=settings.ASSEMBLYAI_POLL_INTERVAL)
 
@@ -481,6 +498,54 @@ def reconcile_stale_transcriptions():
     return len(job_ids)
 
 
+@shared_task(bind=True, max_retries=8)
+def delete_provider_transcription(self, provider_id):
+    try:
+        AssemblyAIClient().delete_transcription(provider_id)
+    except AssemblyAIError as exc:
+        countdown = min(3600, 60 * (2**self.request.retries))
+        raise self.retry(exc=exc, countdown=countdown)
+
+    TranscriptionArtifact.objects.filter(
+        provider_transcription_id=provider_id
+    ).update(provider_transcription_id=None)
+    Transcricao.objects.filter(provider_transcription_id=provider_id).update(
+        provider_transcription_id=None
+    )
+    return provider_id
+
+
+@shared_task
+def reconcile_provider_deletions():
+    terminal_artifact_statuses = [
+        TranscriptionArtifact.Status.COMPLETED,
+        TranscriptionArtifact.Status.FAILED,
+    ]
+    terminal_job_statuses = [
+        Transcricao.Status.COMPLETED,
+        Transcricao.Status.FAILED,
+    ]
+    provider_ids = set(
+        TranscriptionArtifact.objects.filter(
+            status__in=terminal_artifact_statuses,
+            provider_transcription_id__isnull=False,
+        )
+        .exclude(provider_transcription_id="")
+        .values_list("provider_transcription_id", flat=True)[:200]
+    )
+    provider_ids.update(
+        Transcricao.objects.filter(
+            status__in=terminal_job_statuses,
+            provider_transcription_id__isnull=False,
+        )
+        .exclude(provider_transcription_id="")
+        .values_list("provider_transcription_id", flat=True)[:200]
+    )
+    for provider_id in provider_ids:
+        _schedule_provider_deletion(provider_id)
+    return len(provider_ids)
+
+
 @shared_task
 def cleanup_orphaned_files():
     jobs = Transcricao.objects.exclude(arquivo_temporario="").filter(
@@ -500,21 +565,43 @@ def cleanup_orphaned_files():
 
 
 @shared_task
-def purge_expired_anonymous_data():
+def purge_expired_transcription_data():
     now = timezone.now()
     expired_jobs = list(
-        Transcricao.objects.filter(
-            owner__isnull=True, expira_em__lte=now
-        ).values("pk", "artifact_id", "arquivo_temporario", "arquivo_processado")[:500]
+        Transcricao.objects.filter(expira_em__lte=now).values(
+            "pk",
+            "artifact_id",
+            "audio_id",
+            "arquivo_temporario",
+            "arquivo_processado",
+        )[:500]
     )
     artifact_ids = {item["artifact_id"] for item in expired_jobs if item["artifact_id"]}
+    audio_ids = {item["audio_id"] for item in expired_jobs if item["audio_id"]}
+    audio_ids.update(
+        TranscriptionArtifact.objects.filter(pk__in=artifact_ids).values_list(
+            "audio_id", flat=True
+        )
+    )
     for item in expired_jobs:
         delete_storage_file(item["arquivo_temporario"])
         delete_storage_file(item["arquivo_processado"])
         _release_daily_budget(item["pk"])
     Transcricao.objects.filter(pk__in=[item["pk"] for item in expired_jobs]).delete()
-    for artifact_id in artifact_ids:
-        if not Transcricao.objects.filter(artifact_id=artifact_id).exists():
-            TranscriptionArtifact.objects.filter(pk=artifact_id).delete()
+    TranscriptionArtifact.objects.filter(
+        pk__in=artifact_ids,
+        jobs__isnull=True,
+    ).delete()
+    Audio.objects.filter(
+        pk__in=audio_ids,
+        transcricoes__isnull=True,
+        artifacts__isnull=True,
+    ).delete()
     AnonymousSession.objects.filter(expira_em__lte=now, transcricoes__isnull=True).delete()
     return len(expired_jobs)
+
+
+@shared_task
+def purge_expired_anonymous_data():
+    """Compatibility entry point for schedules created before phase 8."""
+    return purge_expired_transcription_data.run()

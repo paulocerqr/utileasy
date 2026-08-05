@@ -10,7 +10,7 @@ concorrência e serviços do perfil.
 ## Usuários autenticados e visitantes
 
 Usuários autenticados usam sessão Django, CSRF e `Transcricao.owner`. Eles têm
-histórico e resultados persistentes. Visitantes também podem transcrever, mas passam
+histórico e resultados persistentes por 180 dias. Visitantes também podem transcrever, mas passam
 por quatro camadas:
 
 ```text
@@ -27,7 +27,7 @@ hash. Conhecer o UUID sem esse segredo não permite consultar status nem baixar 
 Jobs anônimos expiram em 24 horas por padrão. A autorização deixa de funcionar no
 instante da expiração e o Celery Beat apaga periodicamente job, arquivos e sessões
 vazias. Se o visitante entrar antes disso, `POST .../{id}/claim/` transfere o job para
-sua conta, remove o segredo temporário e cancela a expiração.
+sua conta, remove o segredo temporário e define uma nova expiração em 180 dias.
 
 O limite por IP reduz abuso comum, mas não substitui proteção de borda contra DDoS ou
 botnets distribuídas. Em produção, mantenha o backend privado, exponha apenas Caddy e
@@ -69,15 +69,15 @@ continua sendo um `Transcricao` separado e autorizado pelo próprio usuário ou 
 
 Isso evita entregar o objeto, nome do arquivo, UUID ou metadados do job de outra
 pessoa. O hash não é calculado no upload bruto: arquivos equivalentes em contêineres
-diferentes só coincidem depois da normalização. Se o último job anônimo expirar e não
-houver referência persistente, o artefato também é apagado.
+diferentes só coincidem depois da normalização. Quando o último job que referencia um
+artefato expira, o artefato textual e o metadado `Audio` também são apagados.
 
 ## Filas e storage
 
 ```text
 media        ffprobe, FFmpeg, SHA-256 e deduplicação
 provider     upload, submissão, polling ou conclusão do webhook
-maintenance reconciliação, limpeza e expiração anônima
+maintenance reconciliação, exclusão no provedor, limpeza e expiração
 ```
 
 No servidor caseiro um worker `solo`, concorrência 1, consome tudo. Um Celery Beat
@@ -112,6 +112,7 @@ TRANSCRIPTION_MAX_PENDING_PER_USER
 TRANSCRIPTION_MAX_PENDING_PER_ANON
 TRANSCRIPTION_DAILY_BUDGET_SECONDS
 ANONYMOUS_RESULT_TTL_HOURS
+AUTHENTICATED_RESULT_TTL_DAYS
 ANONYMOUS_COOKIE_NAME
 ANON_IP_BURST_LIMIT
 ANON_IP_DAILY_LIMIT

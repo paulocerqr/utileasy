@@ -223,8 +223,13 @@ export function UploadArea() {
             </p>
             <p className="mt-1 text-muted-foreground">
               <Link href="/login" className="font-medium text-brand-light hover:text-foreground">Entre</Link>{" "}
-              para preservar a transcrição e acessá-la em outros dispositivos.
+              para guardar a transcrição por 180 dias e acessá-la em outros dispositivos.
             </p>
+          </div>
+        ) : anonymousContext?.authenticated ? (
+          <div className="mb-5 rounded-lg border border-border bg-secondary/50 p-4 text-sm leading-6 text-muted-foreground">
+            O texto da transcrição fica disponível por 180 dias. Os arquivos de áudio ou vídeo
+            são descartados após o processamento.
           </div>
         ) : null}
         <input
@@ -383,7 +388,11 @@ export function UploadArea() {
           </p>
           {job.anonymous ? (
             <div className="border-t border-border p-4 text-center text-sm text-muted-foreground">
-              Este resultado é temporário. <Link href="/login" className="font-medium text-brand-light">Entre agora para salvá-lo.</Link>
+              Este resultado é temporário. <Link href="/login" className="font-medium text-brand-light">Entre agora para guardá-lo por 180 dias.</Link>
+            </div>
+          ) : job.expires_at ? (
+            <div className="border-t border-border p-4 text-center text-sm text-muted-foreground">
+              Disponível até {new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" }).format(new Date(job.expires_at))}.
             </div>
           ) : null}
         </section>
