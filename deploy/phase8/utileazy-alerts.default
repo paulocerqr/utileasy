@@ -1,0 +1,13 @@
+# Opcional: configure uma ou ambas as saidas. Mantenha este arquivo em modo 0600,
+# pois URLs de webhook normalmente funcionam como credenciais.
+
+# Topico completo de um servidor ntfy, por exemplo https://ntfy.sh/topico-longo-secreto
+ALERT_NTFY_URL=
+
+# Webhook JSON compativel com Slack ou Discord.
+ALERT_WEBHOOK_URL=
+ALERT_WEBHOOK_FORMAT=discord
+
+# Evita repetir o mesmo evento a cada coleta do monitor.
+ALERT_COOLDOWN_SECONDS=3600
+ALERT_STATE_DIR=/var/lib/utileazy-alerts

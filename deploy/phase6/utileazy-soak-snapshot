@@ -11,11 +11,21 @@ MEMORY_WARN_MIB=${MEMORY_WARN_MIB:-512}
 SWAP_WARN_MIB=${SWAP_WARN_MIB:-1024}
 QUEUE_WARN_LENGTH=${QUEUE_WARN_LENGTH:-5}
 TEMPERATURE_WARN_C=${TEMPERATURE_WARN_C:-85}
+BACKUP_CHECK_ENABLED=${BACKUP_CHECK_ENABLED:-0}
+BACKUP_MAX_AGE_HOURS=${BACKUP_MAX_AGE_HOURS:-36}
+BACKUP_STATUS_FILE=${BACKUP_STATUS_FILE:-/var/lib/utileazy-backup/last-success}
+ALERT_HELPER=${ALERT_HELPER:-}
 
 snapshot_status=OK
+warning_summary=
 
 warn() {
     snapshot_status=WARN
+    if [ -n "$warning_summary" ]; then
+        warning_summary="$warning_summary,$*"
+    else
+        warning_summary="$*"
+    fi
     printf 'warning=%s\n' "$*"
 }
 
@@ -50,6 +60,23 @@ printf 'root_disk_used_percent=%s root_disk_available_kib=%s\n' \
     "$disk_used_percent" "$disk_available_kib"
 if [ "$disk_used_percent" -ge "$DISK_WARN_PERCENT" ]; then
     warn "root_disk_usage_at_or_above_${DISK_WARN_PERCENT}_percent"
+fi
+
+if [ "$BACKUP_CHECK_ENABLED" = 1 ]; then
+    if [ ! -r "$BACKUP_STATUS_FILE" ]; then
+        warn 'encrypted_backup_has_no_success_record'
+    else
+        backup_timestamp=$(stat -c %Y "$BACKUP_STATUS_FILE" 2>/dev/null || printf '0')
+        backup_timestamp=$(numeric_or_zero "$backup_timestamp")
+        backup_age_seconds=$(($(date +%s) - backup_timestamp))
+        backup_max_age_seconds=$((BACKUP_MAX_AGE_HOURS * 3600))
+        printf 'encrypted_backup_age_seconds=%s maximum_seconds=%s\n' \
+            "$backup_age_seconds" "$backup_max_age_seconds"
+        if [ "$backup_age_seconds" -lt 0 ] || \
+            [ "$backup_age_seconds" -gt "$backup_max_age_seconds" ]; then
+            warn "encrypted_backup_older_than_${BACKUP_MAX_AGE_HOURS}_hours"
+        fi
+    fi
 fi
 
 thermal_zones_found=0
@@ -139,3 +166,12 @@ if [ "$caddy_status" != 200 ]; then
 fi
 
 printf 'snapshot_status=%s\n' "$snapshot_status"
+
+if [ "$snapshot_status" = WARN ] && [ -n "$ALERT_HELPER" ]; then
+    if [ -x "$ALERT_HELPER" ]; then
+        "$ALERT_HELPER" soak_snapshot_warn "$warning_summary" || \
+            printf '%s\n' 'warning=alert_delivery_failed'
+    else
+        printf 'warning=alert_helper_not_executable path=%s\n' "$ALERT_HELPER"
+    fi
+fi

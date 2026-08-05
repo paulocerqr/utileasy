@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Utileasy encrypted backup every day
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+RandomizedDelaySec=15min
+Persistent=true
+Unit=utileazy-backup.service
+
+[Install]
+WantedBy=timers.target

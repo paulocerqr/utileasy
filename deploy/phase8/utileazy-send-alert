@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+umask 077
+
+config_file=${UTILEAZY_ALERT_CONFIG:-/etc/default/utileazy-alerts}
+[[ -r "$config_file" ]] && source "$config_file"
+
+if [[ $(id -u) -ne 0 ]]; then
+    printf '%s\n' 'alert_error=execute_with_sudo' >&2
+    exit 2
+fi
+
+event=${1:-unspecified_event}
+detail=${2:-$event}
+detail=${detail:0:1200}
+host_name=$(hostname --fqdn 2>/dev/null || hostname)
+message="Utileasy em $host_name: $detail. Consulte journalctl no servidor."
+state_dir=${ALERT_STATE_DIR:-/var/lib/utileazy-alerts}
+cooldown=${ALERT_COOLDOWN_SECONDS:-3600}
+
+install -d -o root -g root -m 0700 "$state_dir"
+
+event_key=$(printf '%s' "$event" | tr -c 'A-Za-z0-9_.-' '_')
+state_file="$state_dir/$event_key.last"
+now=$(date +%s)
+last=0
+if [[ -r "$state_file" ]]; then
+    read -r last <"$state_file" || last=0
+fi
+if [[ "$last" =~ ^[0-9]+$ ]] && (( now - last < cooldown )); then
+    printf 'alert_status=SUPPRESSED event=%s cooldown_seconds=%s\n' "$event" "$cooldown"
+    exit 0
+fi
+
+delivery_count=0
+
+if [[ -n ${ALERT_NTFY_URL:-} ]]; then
+    curl --fail --silent --show-error \
+        --retry 2 \
+        --header 'Title: Alerta Utileasy' \
+        --header 'Priority: high' \
+        --data-binary "$message" \
+        "$ALERT_NTFY_URL" >/dev/null
+    delivery_count=$((delivery_count + 1))
+fi
+
+if [[ -n ${ALERT_WEBHOOK_URL:-} ]]; then
+    webhook_format=${ALERT_WEBHOOK_FORMAT:-discord}
+    case "$webhook_format" in
+        discord) payload_key=content ;;
+        slack) payload_key=text ;;
+        *)
+            printf 'alert_error=unsupported_webhook_format format=%s\n' \
+                "$webhook_format" >&2
+            exit 1
+            ;;
+    esac
+    payload=$(python3 -c \
+        'import json,sys; print(json.dumps({sys.argv[1]: sys.argv[2]}))' \
+        "$payload_key" "$message")
+    curl --fail --silent --show-error \
+        --retry 2 \
+        --header 'Content-Type: application/json' \
+        --data-binary "$payload" \
+        "$ALERT_WEBHOOK_URL" >/dev/null
+    delivery_count=$((delivery_count + 1))
+fi
+
+if (( delivery_count == 0 )); then
+    printf 'alert_status=JOURNAL_ONLY event=%s\n' "$event"
+    exit 0
+fi
+
+printf '%s\n' "$now" >"$state_file"
+chmod 0600 "$state_file"
+printf 'alert_status=SENT event=%s destinations=%s\n' "$event" "$delivery_count"

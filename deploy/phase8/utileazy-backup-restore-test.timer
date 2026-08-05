@@ -1,0 +1,11 @@
+[Unit]
+Description=Test Utileasy backup restoration every week
+
+[Timer]
+OnCalendar=Sun *-*-* 03:15:00
+RandomizedDelaySec=15min
+Persistent=true
+Unit=utileazy-backup-restore-test.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Maintain the Utileasy backup repository monthly
+
+[Timer]
+OnCalendar=Sun *-*-01..07 01:30:00
+RandomizedDelaySec=15min
+Persistent=true
+Unit=utileazy-backup-maintenance.service
+
+[Install]
+WantedBy=timers.target

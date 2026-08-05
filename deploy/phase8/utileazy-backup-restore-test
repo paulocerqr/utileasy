@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+umask 077
+
+config_file=${UTILEAZY_BACKUP_CONFIG:-/etc/utileazy-backup.conf}
+restore_container=${RESTORE_CONTAINER:-utileazy-phase8-postgres-restore}
+restore_created=false
+
+fail() {
+    printf 'restore_backup_error=%s\n' "$*" >&2
+    exit 1
+}
+
+cleanup() {
+    if [[ "$restore_created" == true ]]; then
+        docker rm --force "$restore_container" >/dev/null 2>&1 || true
+    fi
+}
+
+trap cleanup EXIT HUP INT TERM
+
+[[ $(id -u) -eq 0 ]] || fail execute_with_sudo
+[[ -r "$config_file" ]] || fail "configuration_not_readable path=$config_file"
+
+# shellcheck disable=SC1090
+set -a
+source "$config_file"
+set +a
+
+: "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY must be configured}"
+: "${RESTIC_PASSWORD_FILE:?RESTIC_PASSWORD_FILE must be configured}"
+
+if [[ "$RESTIC_REPOSITORY" == *ACCOUNT_ID* ]] ||
+    [[ ${AWS_ACCESS_KEY_ID:-} == CONFIGURE_* ]] ||
+    [[ ${AWS_SECRET_ACCESS_KEY:-} == CONFIGURE_* ]]; then
+    fail r2_configuration_contains_placeholders
+fi
+
+export RESTIC_REPOSITORY RESTIC_PASSWORD_FILE
+export RESTIC_CACHE_DIR=${RESTIC_CACHE_DIR:-/var/cache/utileazy-restic}
+
+postgres_image=${POSTGRES_IMAGE:-postgres:16-alpine}
+restore_tmpfs_size=${RESTORE_TMPFS_SIZE:-1g}
+dump_filename=${POSTGRES_DUMP_FILENAME:-utileazy-postgres.dump}
+state_dir=${BACKUP_STATE_DIR:-/var/lib/utileazy-backup}
+lock_file=${BACKUP_LOCK_FILE:-/run/lock/utileazy-backup.lock}
+
+command -v docker >/dev/null 2>&1 || fail docker_not_found
+command -v restic >/dev/null 2>&1 || fail restic_not_found
+command -v flock >/dev/null 2>&1 || fail flock_not_found
+[[ -r "$RESTIC_PASSWORD_FILE" ]] || fail restic_password_file_not_readable
+
+install -d -o root -g root -m 0700 "$RESTIC_CACHE_DIR" "$state_dir"
+install -d -o root -g root -m 0755 "$(dirname "$lock_file")"
+exec 9>"$lock_file"
+flock --nonblock 9 || fail another_backup_operation_is_running
+
+if docker inspect "$restore_container" >/dev/null 2>&1; then
+    fail "restore_container_already_exists name=$restore_container"
+fi
+
+printf 'restore_backup_test=start timestamp=%s image=%s\n' \
+    "$(date --iso-8601=seconds)" "$postgres_image"
+
+# Verifica a estrutura do repositorio antes de consumir o dump mais recente.
+restic check
+
+docker run --detach \
+    --name "$restore_container" \
+    --network none \
+    --tmpfs "/var/lib/postgresql/data:rw,nosuid,nodev,size=$restore_tmpfs_size" \
+    --env POSTGRES_HOST_AUTH_METHOD=trust \
+    "$postgres_image" >/dev/null
+restore_created=true
+
+restore_ready=false
+for _ in $(seq 1 60); do
+    if docker exec "$restore_container" pg_isready --username postgres >/dev/null 2>&1; then
+        restore_ready=true
+        break
+    fi
+    sleep 1
+done
+
+[[ "$restore_ready" == true ]] || fail temporary_postgres_not_ready
+
+restic dump \
+    --path "/$dump_filename" \
+    latest \
+    "$dump_filename" | \
+docker exec --interactive "$restore_container" \
+    pg_restore \
+    --username postgres \
+    --dbname postgres \
+    --exit-on-error \
+    --no-owner \
+    --no-privileges
+
+table_count=$(docker exec "$restore_container" \
+    psql --username postgres --dbname postgres \
+    --tuples-only --no-align \
+    --command "SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public';")
+migration_count=$(docker exec "$restore_container" \
+    psql --username postgres --dbname postgres \
+    --tuples-only --no-align \
+    --command 'SELECT count(*) FROM django_migrations;')
+
+printf 'restore_backup_test=counts tables=%s migrations=%s\n' \
+    "$table_count" "$migration_count"
+
+[[ "$table_count" =~ ^[1-9][0-9]*$ ]] || fail restored_database_has_no_public_tables
+[[ "$migration_count" =~ ^[1-9][0-9]*$ ]] || fail restored_database_has_no_migrations
+
+date --iso-8601=seconds >"$state_dir/last-restore-success"
+chmod 0600 "$state_dir/last-restore-success"
+printf '%s\n' 'restore_backup_test_status=OK'

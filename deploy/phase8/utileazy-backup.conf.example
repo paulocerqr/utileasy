@@ -1,0 +1,37 @@
+# Copie para /etc/utileazy-backup.conf, mantenha root:root e modo 0600.
+# O Restic criptografa os dados localmente antes de envia-los ao repositorio.
+
+UTILITYDEV_DIR=/home/virgilio/UtilityDev
+POSTGRES_CONTAINER=utilitydev-db
+CLOUDFLARE_TUNNEL_TOKEN_FILE=/home/virgilio/UtilityDev/secrets/cloudflare-tunnel-token
+
+# Cloudflare R2 via API S3. Substitua somente ACCOUNT_ID e as duas credenciais.
+# O bucket utileazy-backups deve permanecer privado e sem regras Lifecycle.
+RESTIC_REPOSITORY=s3:https://ACCOUNT_ID.r2.cloudflarestorage.com/utileazy-backups
+RESTIC_PASSWORD_FILE=/etc/utileazy-restic-password
+RESTIC_CACHE_DIR=/var/cache/utileazy-restic
+
+# Token R2 Object Read & Write limitado exclusivamente ao bucket utileazy-backups.
+AWS_ACCESS_KEY_ID=CONFIGURE_R2_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY=CONFIGURE_R2_SECRET_ACCESS_KEY
+AWS_DEFAULT_REGION=auto
+
+POSTGRES_IMAGE=postgres:16-alpine
+POSTGRES_DUMP_FILENAME=utileazy-postgres.dump
+RESTORE_TMPFS_SIZE=1g
+
+RESTIC_KEEP_DAILY=14
+RESTIC_KEEP_WEEKLY=8
+RESTIC_KEEP_MONTHLY=12
+RESTIC_KEEP_YEARLY=2
+
+# Caminhos opcionais do host, separados por espaco. Ausentes geram apenas aviso.
+BACKUP_HOST_PATHS="/etc/utileazy-backup.conf
+/etc/default/utileazy-alerts
+/etc/ssh/sshd_config
+/etc/ssh/sshd_config.d/00-utileazy-hardening.conf
+/etc/default/ufw
+/etc/default/utileazy-soak-monitor
+/etc/default/utileazy-docker-lan-guard
+/etc/systemd/system/utileazy-docker-lan-guard.service
+/usr/local/sbin/utileazy-docker-lan-guard"

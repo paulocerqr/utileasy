@@ -1,0 +1,21 @@
+[Unit]
+Description=Deliver Utileasy alert for %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/utileazy-send-alert systemd_failure_%i
+TimeoutStartSec=60
+UMask=0077
+StateDirectory=utileazy-alerts
+StateDirectoryMode=0700
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictSUIDSGID=yes
+ReadWritePaths=/var/lib/utileazy-alerts

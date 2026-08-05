@@ -1,0 +1,28 @@
+[Unit]
+Description=Utileasy encrypted external backup
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+OnFailure=utileazy-alert@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/utileazy-backup backup
+TimeoutStartSec=4h
+UMask=0077
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+CacheDirectory=utileazy-restic
+CacheDirectoryMode=0700
+StateDirectory=utileazy-backup
+StateDirectoryMode=0700
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictSUIDSGID=yes
+ReadWritePaths=/var/cache/utileazy-restic /var/lib/utileazy-backup /run/lock

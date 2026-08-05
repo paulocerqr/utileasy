@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+umask 077
+config_file=${UTILEAZY_BACKUP_CONFIG:-/etc/utileazy-backup.conf}
+
+fail() {
+    printf 'backup_maintenance_error=%s\n' "$*" >&2
+    exit 1
+}
+
+[[ $(id -u) -eq 0 ]] || fail execute_with_sudo
+[[ -r "$config_file" ]] || fail "configuration_not_readable path=$config_file"
+
+# shellcheck disable=SC1090
+set -a
+source "$config_file"
+set +a
+
+: "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY must be configured}"
+: "${RESTIC_PASSWORD_FILE:?RESTIC_PASSWORD_FILE must be configured}"
+
+if [[ "$RESTIC_REPOSITORY" == *ACCOUNT_ID* ]] ||
+    [[ ${AWS_ACCESS_KEY_ID:-} == CONFIGURE_* ]] ||
+    [[ ${AWS_SECRET_ACCESS_KEY:-} == CONFIGURE_* ]]; then
+    fail r2_configuration_contains_placeholders
+fi
+
+export RESTIC_REPOSITORY RESTIC_PASSWORD_FILE
+export RESTIC_CACHE_DIR=${RESTIC_CACHE_DIR:-/var/cache/utileazy-restic}
+
+lock_file=${BACKUP_LOCK_FILE:-/run/lock/utileazy-backup.lock}
+keep_daily=${RESTIC_KEEP_DAILY:-14}
+keep_weekly=${RESTIC_KEEP_WEEKLY:-8}
+keep_monthly=${RESTIC_KEEP_MONTHLY:-12}
+keep_yearly=${RESTIC_KEEP_YEARLY:-2}
+
+command -v restic >/dev/null 2>&1 || fail restic_not_found
+command -v flock >/dev/null 2>&1 || fail flock_not_found
+[[ -r "$RESTIC_PASSWORD_FILE" ]] || fail restic_password_file_not_readable
+
+install -d -o root -g root -m 0700 "$RESTIC_CACHE_DIR"
+install -d -o root -g root -m 0755 "$(dirname "$lock_file")"
+exec 9>"$lock_file"
+flock --nonblock 9 || fail another_backup_operation_is_running
+
+printf 'backup_maintenance=start timestamp=%s\n' "$(date --iso-8601=seconds)"
+restic forget \
+    --tag utileazy \
+    --keep-daily "$keep_daily" \
+    --keep-weekly "$keep_weekly" \
+    --keep-monthly "$keep_monthly" \
+    --keep-yearly "$keep_yearly" \
+    --prune
+restic check
+printf '%s\n' 'backup_maintenance_status=OK'

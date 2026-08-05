@@ -251,15 +251,20 @@ A arquitetura recomendada é publicar o Utileazy exclusivamente pelo Cloudflare 
 
   ## Fase 8 — Operação contínua
 
-  - Backup diário com pg_dump, criptografado e armazenado fora do servidor.
-  - Teste periódico de restauração.
+  O roteiro de instalação, recuperação e manutenção está em `deploy/phase8/README.md`.
+
+  - Destino externo definido no MVP: bucket privado `utileazy-backups` no Cloudflare R2,
+    acessado por token S3 limitado ao bucket e criptografado localmente pelo Restic.
+  - Backup diário com `pg_dump`, criptografado pelo Restic e armazenado fora do servidor.
+  - Teste semanal de restauração em PostgreSQL temporário, sem rede e em `tmpfs`.
+  - Retenção, poda e verificação mensal do repositório.
   - Limite e rotação dos logs Docker.
-  - Alertas para disco, containers parados e Tunnel desconectado.
-  - Atualização mensal das imagens e dependências.
+  - Alertas para disco, containers parados, Tunnel desconectado, tarefas systemd com falha e
+    backup com mais de 36 horas.
+  - Atualização mensal controlada das imagens e dependências, sempre precedida por backup e
+    teste de restauração.
   - Revisão dos eventos da Cloudflare, Django e Caddy.
   - Manutenção dos limites anônimos e da cota AssemblyAI.
-  - Considerar um nobreak, especialmente se PostgreSQL estiver em HD mecânico.
-
-  Para iniciarmos a implementação, os primeiros dados necessários são: distribuição e versão
-  do Linux, modelo do roteador, possibilidade de VLAN/rede de convidados, domínio que será
-  usado e se o acesso administrativo continuará pelo Tailscale.
+  - Textos autenticados expiram em 180 dias; resultados anônimos, em 24 horas.
+  - Uploads e transcrições no provedor são excluídos após o resultado terminal.
+  - Avaliação de nobreak para manter também ONU e roteador durante quedas curtas.

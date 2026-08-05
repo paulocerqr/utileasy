@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+umask 077
+
+config_file=${UTILEAZY_BACKUP_CONFIG:-/etc/utileazy-backup.conf}
+
+fail() {
+    printf 'backup_error=%s\n' "$*" >&2
+    exit 1
+}
+
+[[ $(id -u) -eq 0 ]] || fail execute_with_sudo
+[[ -r "$config_file" ]] || fail "configuration_not_readable path=$config_file"
+
+# Este arquivo e controlado pelo root e pode conter credenciais do backend remoto.
+# shellcheck disable=SC1090
+set -a
+source "$config_file"
+set +a
+
+: "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY must be configured}"
+: "${RESTIC_PASSWORD_FILE:?RESTIC_PASSWORD_FILE must be configured}"
+
+if [[ "$RESTIC_REPOSITORY" == *ACCOUNT_ID* ]] ||
+    [[ ${AWS_ACCESS_KEY_ID:-} == CONFIGURE_* ]] ||
+    [[ ${AWS_SECRET_ACCESS_KEY:-} == CONFIGURE_* ]]; then
+    fail r2_configuration_contains_placeholders
+fi
+
+export RESTIC_REPOSITORY RESTIC_PASSWORD_FILE
+export RESTIC_CACHE_DIR=${RESTIC_CACHE_DIR:-/var/cache/utileazy-restic}
+
+project_dir=${UTILITYDEV_DIR:-/home/virgilio/UtilityDev}
+postgres_container=${POSTGRES_CONTAINER:-utilitydev-db}
+dump_filename=${POSTGRES_DUMP_FILENAME:-utileazy-postgres.dump}
+lock_file=${BACKUP_LOCK_FILE:-/run/lock/utileazy-backup.lock}
+state_dir=${BACKUP_STATE_DIR:-/var/lib/utileazy-backup}
+
+command -v docker >/dev/null 2>&1 || fail docker_not_found
+command -v restic >/dev/null 2>&1 || fail restic_not_found
+command -v flock >/dev/null 2>&1 || fail flock_not_found
+[[ -r "$RESTIC_PASSWORD_FILE" ]] || fail restic_password_file_not_readable
+
+install -d -o root -g root -m 0700 "$RESTIC_CACHE_DIR" "$state_dir"
+install -d -o root -g root -m 0755 "$(dirname "$lock_file")"
+
+exec 9>"$lock_file"
+flock --nonblock 9 || fail another_backup_operation_is_running
+
+operation=${1:-backup}
+
+case "$operation" in
+    init)
+        printf 'backup_repository_init=start timestamp=%s\n' "$(date --iso-8601=seconds)"
+        restic init
+        printf '%s\n' 'backup_repository_init_status=OK'
+        exit 0
+        ;;
+    snapshots)
+        exec restic snapshots --tag utileazy
+        ;;
+    backup)
+        ;;
+    *)
+        fail "unsupported_operation operation=$operation"
+        ;;
+esac
+
+restic snapshots >/dev/null || \
+    fail repository_unavailable_or_not_initialized
+
+[[ -d "$project_dir" ]] || fail "project_directory_missing path=$project_dir"
+[[ -r "$project_dir/.env" ]] || fail "environment_file_missing path=$project_dir/.env"
+
+if ! docker inspect "$postgres_container" >/dev/null 2>&1; then
+    fail "postgres_container_missing name=$postgres_container"
+fi
+if [[ $(docker inspect --format '{{.State.Status}}' "$postgres_container") != running ]]; then
+    fail "postgres_container_not_running name=$postgres_container"
+fi
+
+db_user=$(docker exec "$postgres_container" printenv POSTGRES_USER)
+db_name=$(docker exec "$postgres_container" printenv POSTGRES_DB)
+[[ -n "$db_user" ]] || fail postgres_user_empty
+[[ -n "$db_name" ]] || fail postgres_database_empty
+
+printf 'backup=start timestamp=%s repository_configured=yes\n' \
+    "$(date --iso-8601=seconds)"
+printf 'backup_database=start container=%s database=%s\n' \
+    "$postgres_container" "$db_name"
+
+# --stdin-from-command faz o Restic cancelar o snapshot se o pg_dump falhar.
+restic backup \
+    --tag utileazy \
+    --tag database \
+    --stdin-filename "$dump_filename" \
+    --stdin-from-command \
+    -- docker exec "$postgres_container" \
+        pg_dump \
+        --username "$db_user" \
+        --dbname "$db_name" \
+        --format custom \
+        --no-owner \
+        --no-privileges
+
+printf '%s\n' 'backup_database_status=OK'
+
+# O volume de midia contem somente uploads e MP3 temporarios. Nao o arquive: isso
+# prolongaria a retencao de conteudo que o pipeline remove apos enviar ao provedor.
+set -- "$project_dir/.env"
+
+token_file=${CLOUDFLARE_TUNNEL_TOKEN_FILE:-$project_dir/secrets/cloudflare-tunnel-token}
+if [[ -r "$token_file" ]]; then
+    set -- "$@" "$token_file"
+else
+    fail "cloudflare_token_file_missing path=$token_file"
+fi
+
+# Adicione apenas caminhos absolutos, existentes e sem espacos nesta variavel.
+for host_path in ${BACKUP_HOST_PATHS:-}; do
+    if [[ -e "$host_path" ]]; then
+        set -- "$@" "$host_path"
+    else
+        printf 'backup_notice=optional_path_missing path=%s\n' "$host_path"
+    fi
+done
+
+printf 'backup_files=start source_count=%s transient_media_excluded=yes\n' "$#"
+restic backup \
+    --tag utileazy \
+    --tag files \
+    --exclude-caches \
+    "$@"
+printf '%s\n' 'backup_files_status=OK'
+
+date --iso-8601=seconds >"$state_dir/last-success"
+chmod 0600 "$state_dir/last-success"
+
+printf 'backup_status=OK timestamp=%s\n' "$(date --iso-8601=seconds)"
