@@ -21,7 +21,7 @@ export function FileToolsSection() {
         <ToolCard
           icon={FileText}
           title="Conversão PDF ↔ DOCX"
-          description="Converta documentos entre PDF e Word mantendo a formatação original."
+          description="Converta documentos entre PDF e Word preservando o layout quando possível."
           href="/pdf-docx"
         />
         <ToolCard

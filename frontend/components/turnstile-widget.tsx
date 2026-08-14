@@ -24,9 +24,14 @@ declare global {
 interface TurnstileWidgetProps {
   siteKey: string
   onToken: (token: string) => void
+  action?: string
 }
 
-export function TurnstileWidget({ siteKey, onToken }: TurnstileWidgetProps) {
+export function TurnstileWidget({
+  siteKey,
+  onToken,
+  action = "anonymous_transcription",
+}: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -37,7 +42,7 @@ export function TurnstileWidget({ siteKey, onToken }: TurnstileWidgetProps) {
       if (cancelled || widgetId || !containerRef.current || !window.turnstile) return
       widgetId = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
-        action: "anonymous_transcription",
+        action,
         theme: "auto",
         callback: onToken,
         "expired-callback": () => onToken(""),
@@ -65,7 +70,7 @@ export function TurnstileWidget({ siteKey, onToken }: TurnstileWidgetProps) {
       existingScript?.removeEventListener("load", renderWidget)
       if (widgetId && window.turnstile) window.turnstile.remove(widgetId)
     }
-  }, [onToken, siteKey])
+  }, [action, onToken, siteKey])
 
   return <div ref={containerRef} className="flex min-h-16 justify-center" />
 }

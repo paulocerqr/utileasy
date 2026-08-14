@@ -71,7 +71,7 @@ const FEATURES: Feature[] = [
         "pdf-docx",
         "Conversão PDF para DOCX",
         FileText,
-        "Converta documentos entre PDF e Word mantendo a formatação original.",
+        "Converta documentos entre PDF e Word preservando o layout quando possível.",
         "/pdf-docx",
         "Abrir ferramenta",
       ],
