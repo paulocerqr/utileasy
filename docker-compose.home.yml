@@ -12,11 +12,11 @@ services:
     cpus: 0.75
 
   worker:
-    mem_limit: 1536m
+    mem_limit: 2g
     cpus: 1.00
     command: >-
       celery -A config worker --loglevel=INFO --pool=solo --concurrency=1
-      -Q media,provider,maintenance
+      -Q media,provider,documents,maintenance
 
   beat:
     mem_limit: 192m

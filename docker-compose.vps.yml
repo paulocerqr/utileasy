@@ -40,6 +40,34 @@ services:
       --concurrency=${VPS_PROVIDER_CONCURRENCY:-2}
       -Q provider,maintenance --hostname=provider@%h
 
+  worker-documents:
+    build:
+      context: ./backend
+    container_name: utilitydev-worker-documents
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      CELERY_BROKER_URL: redis://redis:6379/0
+      MEDIA_ROOT: /app/media
+    volumes:
+      - transcription_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    mem_limit: 2g
+    cpus: 1.00
+    command: >-
+      celery -A config worker --loglevel=INFO --pool=prefork
+      --concurrency=${VPS_DOCUMENT_CONCURRENCY:-1}
+      -Q documents --hostname=documents@%h
+
   beat:
     build:
       context: ./backend

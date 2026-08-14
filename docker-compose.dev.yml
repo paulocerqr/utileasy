@@ -10,4 +10,4 @@ services:
   worker:
     command: >-
       celery -A config worker --loglevel=INFO --pool=prefork --concurrency=2
-      -Q media,provider,maintenance
+      -Q media,provider,documents,maintenance
