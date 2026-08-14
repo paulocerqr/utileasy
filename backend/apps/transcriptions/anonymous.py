@@ -122,7 +122,7 @@ def enforce_anonymous_rate_limits(request, session):
     )
 
 
-def validate_turnstile(token, request):
+def validate_turnstile(token, request, expected_action=None):
     if not settings.TURNSTILE_ENABLED:
         return
     if not settings.TURNSTILE_SECRET_KEY:
@@ -150,7 +150,10 @@ def validate_turnstile(token, request):
         result.get("hostname") != settings.TURNSTILE_EXPECTED_HOSTNAME
     ):
         raise CaptchaError("O CAPTCHA foi emitido para outro domínio.")
-    if settings.TURNSTILE_EXPECTED_ACTION and (
-        result.get("action") != settings.TURNSTILE_EXPECTED_ACTION
-    ):
+    action = (
+        settings.TURNSTILE_EXPECTED_ACTION
+        if expected_action is None
+        else expected_action
+    )
+    if action and result.get("action") != action:
         raise CaptchaError("O CAPTCHA não corresponde a esta operação.")
