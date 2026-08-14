@@ -5,6 +5,8 @@
 **Complexidade:** Alta  
 **Prioridade sugerida:** Etapa 3
 
+**Status:** Implementada em 14/08/2026
+
 ## Descrição da tarefa
 
 Substituir a simulação existente em `/pdf-docx` por conversões reais de PDF para DOCX
@@ -13,9 +15,10 @@ honesta sobre possíveis diferenças de layout.
 
 ## Contexto atual
 
-A rota, o upload, as opções e o feedback visual já existem, mas o progresso é
-simulado e o download contém apenas um arquivo de texto. A home promete manutenção da
-formatação original, algo que não pode ser garantido em todos os documentos.
+A rota agora envia o arquivo ao backend, acompanha um job Celery real e baixa o
+resultado protegido. A comunicação da home e da ferramenta foi ajustada para
+preservar o layout
+quando possível, sem garantia de fidelidade ao original.
 
 ## Solução proposta
 
@@ -65,21 +68,21 @@ Configuração inicial:
 
 ## Critérios de aceitação
 
-- [ ] Um DOCX válido gera um PDF que pode ser aberto e baixado.
-- [ ] Um PDF textual válido gera um DOCX que pode ser aberto no LibreOffice e Word.
-- [ ] Texto, imagens e tabelas simples são preservados nos arquivos de referência.
-- [ ] A interface não afirma que a formatação será idêntica ao original.
-- [ ] Arquivos inválidos, acima do limite, protegidos ou corrompidos retornam erro útil.
-- [ ] O processamento acontece na fila `documents` e não bloqueia requisições HTTP.
-- [ ] Um usuário não acessa jobs ou arquivos de outro usuário.
-- [ ] Visitantes precisam do token do job e perdem o resultado após a expiração.
-- [ ] Arquivos temporários são removidos em sucesso, falha e timeout.
-- [ ] Os testes cobrem os dois sentidos, autorização, limites e limpeza.
+- [x] Um DOCX válido gera um PDF que pode ser aberto e baixado.
+- [x] Um PDF textual válido gera um DOCX que pode ser aberto no LibreOffice e Word.
+- [x] Texto, imagens e tabelas simples são preservados nos arquivos de referência.
+- [x] A interface não afirma que a formatação será idêntica ao original.
+- [x] Arquivos inválidos, acima do limite, protegidos ou corrompidos retornam erro útil.
+- [x] O processamento acontece na fila `documents` e não bloqueia requisições HTTP.
+- [x] Um usuário não acessa jobs ou arquivos de outro usuário.
+- [x] Visitantes precisam do token do job e perdem o resultado após a expiração.
+- [x] Arquivos temporários são removidos em sucesso, falha e timeout.
+- [x] Os testes cobrem os dois sentidos, autorização, limites e limpeza.
 
 ## Evidências esperadas
 
-- Testes automatizados do backend.
-- Fixtures pequenas com texto, imagem e tabela.
-- Medição de pico de RAM e tempo em casa e na VPS.
-- Build Docker validando a instalação do LibreOffice.
+- [x] Testes automatizados do backend.
+- [x] Fixtures pequenas com texto, imagem e tabela.
+- [ ] Medição de pico de RAM e tempo no servidor caseiro e na VPS.
+- [x] Build Docker validando a instalação do LibreOffice.
 

@@ -94,6 +94,22 @@ segura para `REMOTE_ADDR`.
 A cota diária de segundos é verificada de forma exata pelo worker depois do ffprobe.
 Quando esgotada, o job muda para `failed` antes de chamar a AssemblyAI.
 
+## Conversão de documentos
+
+```text
+GET  /api/documents/
+POST /api/documents/
+GET  /api/documents/{public_id}/
+GET  /api/documents/{public_id}/download/
+POST /api/documents/{public_id}/claim/
+```
+
+A criação recebe PDF ou DOCX em `multipart/form-data` e responde 202. O status é
+consultado por polling. Usuários autenticados acessam somente jobs próprios;
+visitantes precisam de `X-Job-Token`. Upload anônimo reutiliza cookie, Turnstile e
+limites Redis. O claim autenticado invalida o token anônimo. Detalhes de conversão,
+limites e ciclo de vida estão em `14-conversao-documentos.md`.
+
 ## Webhook AssemblyAI
 
 ```text

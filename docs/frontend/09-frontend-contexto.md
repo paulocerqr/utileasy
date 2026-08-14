@@ -109,6 +109,8 @@ O build atual do Next compila as rotas:
 /api/auth/[...path]
 /api/transcriptions
 /api/transcriptions/[...path]
+/api/documents
+/api/documents/[...path]
 /api/webhooks/[...path]
 ```
 
@@ -658,7 +660,7 @@ Implementado:
 - Next.js em produção via Docker Compose.
 - Home visual completa com seções e cards.
 - Carrossel animado com as 18 funcionalidades da home.
-- Rota /pdf-docx com fluxo visual de conversão.
+- Rota /pdf-docx com upload, job assíncrono, polling, histórico e download protegido.
 - Rota /juntarpdf para seleção, pré-visualização, ordenação e mesclagem local de PDFs.
 - Rota /imagens-para-pdf com normalização e geração local de PDFs.
 - Rota /sorteador com sorteio local de números e itens sem repetição.
@@ -668,7 +670,7 @@ Implementado:
 - Rota /transcrisao integrada ao backend para upload, polling e download.
 - Login real por sessão Django, cookie HttpOnly e CSRF.
 - Identificação do usuário e logout no AppShell.
-- Proxy same-origin para autenticação, transcrições e webhook.
+- Proxy same-origin para autenticação, transcrições, documentos e webhook.
 - Tema claro e escuro com persistência em localStorage.
 - Imagens de fundo diferentes por rota e por tema.
 - Fonte global Geist Mono.
@@ -870,6 +872,8 @@ O build validado do Next inclui:
 /api/anonymous/[...path]
 /api/transcriptions
 /api/transcriptions/[...path]
+/api/documents
+/api/documents/[...path]
 /api/webhooks/[...path]
 /_not-found
 ```
@@ -1180,3 +1184,25 @@ docker compose run --rm frontend-check pnpm test
 docker compose run --rm frontend-check
 docker compose build frontend
 ```
+
+## 18. Conversão PDF e DOCX
+
+A ferramenta funcional está em `/pdf-docx`. O componente
+`components/pdf-docx-converter.tsx` aceita PDF ou DOCX, inicializa a sessão anônima,
+envia o upload pelo proxy same-origin e acompanha os estados reais por polling a cada
+dois segundos.
+
+```text
+frontend/app/api/documents/route.ts
+frontend/app/api/documents/[...path]/route.ts
+frontend/lib/backend-proxy.ts
+```
+
+O formato de saída é inferido pela entrada. Visitantes resolvem o Turnstile com a ação
+`anonymous_document_conversion` e guardam UUID e token somente em `sessionStorage`.
+Após login, `components/login-form.tsx` reivindica o job e o associa à conta.
+
+A tela mostra o histórico autenticado ou o job temporário da sessão, permite download
+protegido e informa os limites reais: 50 MB, 200 páginas, ausência de OCR, senha,
+macros e formato DOC antigo. O texto promete preservar layout, imagens e tabelas
+simples quando possível, sem afirmar fidelidade idêntica ao original.
