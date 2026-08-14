@@ -2,7 +2,6 @@ import {
   FileText,
   FilePlus2,
   ImageIcon,
-  Film,
   Mic,
   Shuffle,
   ListOrdered,
@@ -51,13 +50,6 @@ export function MediaSection() {
         iconBg="bg-secondary"
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <ToolCardWide
-          icon={Film}
-          title="Baixar vídeos do YouTube"
-          description="Baixe vídeos para uso pessoal e offline."
-          badge="USO RESPONSÁVEL"
-          warning="Respeite direitos autorais e os termos da plataforma. Use apenas com conteúdo autorizado."
-        />
         <ToolCardWide
           icon={Mic}
           title="Transcrição de áudio e vídeo"

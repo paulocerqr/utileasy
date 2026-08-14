@@ -35,7 +35,6 @@ const domains = [
     label: "Mídia e vídeo",
     icon: AudioLines,
     tools: [
-      { label: "Baixar vídeos do YouTube", href: "/#feature-carousel" },
       { label: "Transcrição de áudio e vídeo", href: "/transcrisao" },
     ],
   },
