@@ -464,7 +464,7 @@ Estado atual:
 
 ```text
 - Componente client-side animado com motion.
-- Exibe as 18 funcionalidades presentes nas seções da home.
+- Exibe as 9 funcionalidades presentes nas seções da home.
 - Possui autoplay, pausa por hover/foco e controles anterior/próximo.
 - Permite selecionar funcionalidades pela lista lateral.
 - Respeita prefers-reduced-motion.
@@ -492,11 +492,8 @@ Seção `Ferramentas de Arquivos`:
 Seção `Mídia & Vídeo`:
 
 ```text
-- Baixar vídeos do YouTube
 - Transcrição de áudio e vídeo -> href /transcrisao
 ```
-
-O card de YouTube tem badge `USO RESPONSÁVEL` e aviso sobre direitos autorais.
 
 Seção `Produtividade`:
 
@@ -659,7 +656,7 @@ Implementado:
 ```text
 - Next.js em produção via Docker Compose.
 - Home visual completa com seções e cards.
-- Carrossel animado com as 18 funcionalidades da home.
+- Carrossel animado com as 9 funcionalidades da home.
 - Rota /pdf-docx com upload, job assíncrono, polling, histórico e download protegido.
 - Rota /juntarpdf para seleção, pré-visualização, ordenação e mesclagem local de PDFs.
 - Rota /imagens-para-pdf com normalização e geração local de PDFs.
