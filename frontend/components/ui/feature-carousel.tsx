@@ -7,7 +7,6 @@ import {
   ArrowRight,
   FilePlus2,
   FileText,
-  Film,
   Gauge,
   ImageIcon,
   ListOrdered,
@@ -71,7 +70,7 @@ const FEATURES: Feature[] = [
         "pdf-docx",
         "Conversão PDF para DOCX",
         FileText,
-        "Converta documentos entre PDF e Word mantendo a formatação original.",
+        "Converta documentos entre PDF e Word preservando o layout quando possível.",
         "/pdf-docx",
         "Abrir ferramenta",
       ],
@@ -98,12 +97,6 @@ const FEATURES: Feature[] = [
     "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1200&auto=format&fit=crop",
     "#ferramentas",
     [
-      [
-        "youtube",
-        "Baixar vídeos do YouTube",
-        Film,
-        "Baixe vídeos autorizados para uso pessoal e offline.",
-      ],
       [
         "transcricao",
         "Transcrição de áudio e vídeo",

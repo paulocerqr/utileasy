@@ -80,7 +80,7 @@ services:
       celery -A config worker --loglevel=INFO
       --pool=${CELERY_WORKER_POOL:-solo}
       --concurrency=${CELERY_WORKER_CONCURRENCY:-1}
-      -Q ${CELERY_WORKER_QUEUES:-media,provider,maintenance}
+      -Q ${CELERY_WORKER_QUEUES:-media,provider,documents,maintenance}
 
   beat:
     build:

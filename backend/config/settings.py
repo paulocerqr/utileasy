@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.accounts",
     "apps.transcriptions",
+    "apps.documents",
 ]
 
 MIDDLEWARE = [
@@ -181,6 +182,9 @@ CELERY_TASK_ROUTES = {
     "apps.transcriptions.tasks.cleanup_orphaned_files": {"queue": "maintenance"},
     "apps.transcriptions.tasks.purge_expired_transcription_data": {"queue": "maintenance"},
     "apps.transcriptions.tasks.purge_expired_anonymous_data": {"queue": "maintenance"},
+    "apps.documents.tasks.process_document_conversion": {"queue": "documents"},
+    "apps.documents.tasks.cleanup_orphaned_document_files": {"queue": "maintenance"},
+    "apps.documents.tasks.purge_expired_document_data": {"queue": "maintenance"},
 }
 CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.getenv("CELERY_MAX_TASKS_PER_CHILD", "50"))
 
@@ -207,6 +211,9 @@ TURNSTILE_EXPECTED_HOSTNAME = os.getenv("TURNSTILE_EXPECTED_HOSTNAME", "")
 TURNSTILE_EXPECTED_ACTION = os.getenv(
     "TURNSTILE_EXPECTED_ACTION", "anonymous_transcription"
 )
+DOCUMENT_TURNSTILE_EXPECTED_ACTION = os.getenv(
+    "DOCUMENT_TURNSTILE_EXPECTED_ACTION", "anonymous_document_conversion"
+)
 TURNSTILE_ENABLED = os.getenv("TURNSTILE_ENABLED", "1") == "1"
 ASSEMBLYAI_POLL_INTERVAL = int(os.getenv("ASSEMBLYAI_POLL_INTERVAL", 10))
 TRANSCRIPTION_COMPLETION_MODE = os.getenv("TRANSCRIPTION_COMPLETION_MODE", "polling").lower()
@@ -215,11 +222,33 @@ ASSEMBLYAI_WEBHOOK_SECRET = os.getenv("ASSEMBLYAI_WEBHOOK_SECRET", "")
 TRANSCRIPTION_RECONCILE_AFTER_SECONDS = int(
     os.getenv("TRANSCRIPTION_RECONCILE_AFTER_SECONDS", "300")
 )
+DOCUMENT_MAX_FILE_SIZE = int(os.getenv("DOCUMENT_MAX_FILE_SIZE", 50 * 1024 * 1024))
+DOCUMENT_MAX_PAGES = int(os.getenv("DOCUMENT_MAX_PAGES", "200"))
+DOCUMENT_MAX_UNCOMPRESSED_SIZE = int(
+    os.getenv("DOCUMENT_MAX_UNCOMPRESSED_SIZE", 250 * 1024 * 1024)
+)
+DOCUMENT_MAX_PENDING_JOBS = int(os.getenv("DOCUMENT_MAX_PENDING_JOBS", "3"))
+DOCUMENT_MAX_PENDING_PER_USER = int(
+    os.getenv("DOCUMENT_MAX_PENDING_PER_USER", "1")
+)
+DOCUMENT_MAX_PENDING_PER_ANON = int(
+    os.getenv("DOCUMENT_MAX_PENDING_PER_ANON", "1")
+)
+DOCUMENT_CONVERSION_TIMEOUT_SECONDS = int(
+    os.getenv("DOCUMENT_CONVERSION_TIMEOUT_SECONDS", "600")
+)
+DOCUMENT_CONVERSION_MEMORY_LIMIT_MB = int(
+    os.getenv("DOCUMENT_CONVERSION_MEMORY_LIMIT_MB", "1536")
+)
 
 if TRANSCRIPTION_COMPLETION_MODE not in {"polling", "webhook"}:
     raise ValueError("TRANSCRIPTION_COMPLETION_MODE deve ser 'polling' ou 'webhook'.")
 if AUTHENTICATED_RESULT_TTL_DAYS <= 0:
     raise ValueError("AUTHENTICATED_RESULT_TTL_DAYS deve ser maior que zero.")
+if DOCUMENT_MAX_FILE_SIZE <= 0 or DOCUMENT_MAX_PAGES <= 0:
+    raise ValueError("Os limites de documentos devem ser maiores que zero.")
+if DOCUMENT_CONVERSION_TIMEOUT_SECONDS <= 0 or DOCUMENT_CONVERSION_MEMORY_LIMIT_MB <= 0:
+    raise ValueError("Os limites do processo de conversão devem ser maiores que zero.")
 if TRANSCRIPTION_COMPLETION_MODE == "webhook" and (
     not PUBLIC_BASE_URL or not ASSEMBLYAI_WEBHOOK_SECRET
 ):
@@ -240,6 +269,14 @@ CELERY_BEAT_SCHEDULE = {
     },
     "reconcile-provider-deletions": {
         "task": "apps.transcriptions.tasks.reconcile_provider_deletions",
+        "schedule": 3600.0,
+    },
+    "cleanup-orphaned-document-files": {
+        "task": "apps.documents.tasks.cleanup_orphaned_document_files",
+        "schedule": 3600.0,
+    },
+    "purge-expired-document-data": {
+        "task": "apps.documents.tasks.purge_expired_document_data",
         "schedule": 3600.0,
     },
 }

@@ -597,7 +597,11 @@ def purge_expired_transcription_data():
         transcricoes__isnull=True,
         artifacts__isnull=True,
     ).delete()
-    AnonymousSession.objects.filter(expira_em__lte=now, transcricoes__isnull=True).delete()
+    AnonymousSession.objects.filter(
+        expira_em__lte=now,
+        transcricoes__isnull=True,
+        document_conversions__isnull=True,
+    ).delete()
     return len(expired_jobs)
 
 

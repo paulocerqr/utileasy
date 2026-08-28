@@ -74,7 +74,7 @@ export async function proxyBackendRequest(request: Request, apiPath: string) {
     })
   } catch {
     return Response.json(
-      { detail: "O serviço de transcrição está indisponível." },
+      { detail: "O serviço solicitado está indisponível." },
       { status: 503 },
     )
   }
@@ -82,4 +82,8 @@ export async function proxyBackendRequest(request: Request, apiPath: string) {
 
 export function proxyTranscriptionRequest(request: Request, path = "") {
   return proxyBackendRequest(request, `transcriptions/${path}`)
+}
+
+export function proxyDocumentRequest(request: Request, path = "") {
+  return proxyBackendRequest(request, `documents/${path}`)
 }

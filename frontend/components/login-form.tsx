@@ -33,8 +33,22 @@ export function LoginForm() {
       })
       const data = await response.json().catch(() => null)
       if (!response.ok) throw new Error(data?.detail || "Não foi possível entrar.")
-      const pendingRaw = sessionStorage.getItem("utileazy:pending-anonymous-job")
-      if (pendingRaw) {
+      const pendingJobs = [
+        {
+          storageKey: "utileazy:pending-anonymous-job",
+          apiPath: "transcriptions",
+          destination: "/transcrisao",
+        },
+        {
+          storageKey: "utileazy:pending-anonymous-document-job",
+          apiPath: "documents",
+          destination: "/pdf-docx",
+        },
+      ]
+      let destination = "/transcrisao"
+      for (const pendingJob of pendingJobs) {
+        const pendingRaw = sessionStorage.getItem(pendingJob.storageKey)
+        if (!pendingRaw) continue
         try {
           const pending = JSON.parse(pendingRaw) as { id: string; token: string }
           const claimCsrfResponse = await fetch("/api/auth/csrf", { cache: "no-store" })
@@ -42,19 +56,22 @@ export function LoginForm() {
           if (!claimCsrfResponse.ok || !claimCsrfData?.csrf_token) {
             throw new Error("Não foi possível renovar o CSRF após o login.")
           }
-          const claimResponse = await fetch(`/api/transcriptions/${pending.id}/claim`, {
+          const claimResponse = await fetch(`/api/${pendingJob.apiPath}/${pending.id}/claim`, {
             method: "POST",
             headers: {
               "X-CSRFToken": claimCsrfData.csrf_token,
               "X-Job-Token": pending.token,
             },
           })
-          if (claimResponse.ok) sessionStorage.removeItem("utileazy:pending-anonymous-job")
+          if (claimResponse.ok) {
+            sessionStorage.removeItem(pendingJob.storageKey)
+            destination = pendingJob.destination
+          }
         } catch {
           // Login remains successful even if an expired anonymous job cannot be claimed.
         }
       }
-      router.push("/transcrisao")
+      router.push(destination)
       router.refresh()
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Não foi possível entrar.")

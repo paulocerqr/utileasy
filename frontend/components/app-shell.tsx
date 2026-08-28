@@ -35,7 +35,6 @@ const domains = [
     label: "Mídia e vídeo",
     icon: AudioLines,
     tools: [
-      { label: "Baixar vídeos do YouTube", href: "/#feature-carousel" },
       { label: "Transcrição de áudio e vídeo", href: "/transcrisao" },
     ],
   },
@@ -135,9 +134,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <ThemeToggle />
           {authLoaded && currentUser ? (
             <>
-              <span className="hidden items-center gap-2 rounded-md px-2 text-sm text-muted-foreground sm:flex">
+              <Link href="/perfil" className="hidden items-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:text-foreground sm:flex">
                 <UserRound className="size-4" /> {currentUser.username}
-              </span>
+              </Link>
               <button
                 type="button"
                 onClick={signOut}
@@ -220,6 +219,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="flex flex-col gap-3 border-t border-border pt-4">
           <Link href="/#feature-carousel" onClick={() => setSidebarOpen(false)} className="rounded-md border border-border bg-secondary px-4 py-3 text-center text-xs font-medium hover:bg-accent">Ver todas as ferramentas</Link>
+          {authLoaded && currentUser ? (
+            <>
+              <Link href="/perfil" onClick={() => setSidebarOpen(false)} className="flex items-center gap-2 rounded-md border border-border bg-secondary px-4 py-3 text-xs font-medium hover:bg-accent">
+                <UserRound className="size-4" /> Perfil
+              </Link>
+              <button type="button" onClick={() => { setSidebarOpen(false); signOut() }} className="flex items-center gap-2 rounded-md border border-border bg-secondary px-4 py-3 text-xs font-medium hover:bg-accent">
+                <LogOut className="size-4" /> Sair
+              </button>
+            </>
+          ) : authLoaded ? (
+            <Link href="/login" onClick={() => setSidebarOpen(false)} className="rounded-md bg-primary px-4 py-3 text-center text-xs font-medium text-primary-foreground hover:opacity-90">Entrar</Link>
+          ) : null}
         </div>
       </aside>
 

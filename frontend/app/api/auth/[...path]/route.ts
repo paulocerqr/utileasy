@@ -14,3 +14,5 @@ async function proxy(request: Request, context: RouteContext) {
 
 export const GET = proxy
 export const POST = proxy
+export const PATCH = proxy
+export const DELETE = proxy

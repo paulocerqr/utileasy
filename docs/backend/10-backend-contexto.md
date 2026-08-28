@@ -12,17 +12,21 @@ visitantes usam cookie anônimo, CAPTCHA e um segredo por job.
 apps.common          health check
 apps.accounts        CSRF, login, logout e usuário atual
 apps.transcriptions  upload, quota, deduplicação, webhook, expiração e PDF
+apps.documents       conversão assíncrona PDF e DOCX
 
 Audio                     MP3 canônico e SHA-256
 AnonymousSession          hash do cookie e expiração
 TranscriptionArtifact     resultado por áudio/configuração
 Transcricao               solicitação privada de conta ou visitante
 TranscriptionCapacity     lock dos limites simultâneos
+DocumentConversion        job privado PDF para DOCX ou DOCX para PDF
+DocumentConversionCapacity lock da capacidade global de documentos
 DailyTranscriptionBudget  segundos reservados/consumidos por dia
 ```
 
-A migration atual é `0004_anonymous_access_and_artifacts.py`. Jobs anteriores foram
-preservados no usuário inativo `legacy-transcriptions` pela migration 0003.
+Transcrições chegam à migration `0005_authenticated_result_expiration.py` e
+documentos à `0001_initial.py`. Jobs legados continuam preservados no usuário inativo
+`legacy-transcriptions`.
 
 ## Segurança e autorização
 
@@ -65,8 +69,9 @@ metadados entre usuários.
 ## Filas, storage e perfis
 
 ```text
-media        CPU/disco
+media        CPU/disco de áudio
 provider     rede e conclusão
+documents    LibreOffice e pdf2docx
 maintenance reconciliação, exclusão no provedor, arquivos órfãos e expiração
 ```
 
@@ -80,6 +85,6 @@ provedor e a reconciliação recupera callbacks perdidos.
 
 ## Validação
 
-Foram validados 20 testes, `manage.py check`, migrations sem divergência e TypeScript
+Foram validados 42 testes, `manage.py check`, migrations sem divergência e TypeScript
 do frontend. AssemblyAI, webhook e S3 reais ainda dependem das respectivas
 credenciais e infraestrutura externa.

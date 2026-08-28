@@ -36,7 +36,7 @@ CELERY_WORKER_QUEUES
 ```
 
 Os defaults continuam adequados ao servidor caseiro: `solo`, concorrência 1 e filas
-`media,provider,maintenance`.
+`media,provider,documents,maintenance`.
 
 ## Perfil caseiro
 
@@ -101,6 +101,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```text
 worker             somente fila media
 worker-provider    filas provider e maintenance
+worker-documents   fila documents, concorrência 1 e limite de 2 GB
 beat               recebe limites de CPU/RAM do perfil
 caddy              HTTPS e reverse proxy para frontend
 caddy_data         certificados
@@ -112,6 +113,7 @@ Concorrências:
 ```text
 VPS_MEDIA_CONCURRENCY       1 em 2 vCPU; 2 em 4 vCPU
 VPS_PROVIDER_CONCURRENCY    padrão 2
+VPS_DOCUMENT_CONCURRENCY    padrão 1
 ```
 
 ```bash
@@ -138,8 +140,8 @@ python manage.py collectstatic --noinput
 gunicorn com 2 workers e timeout 60
 ```
 
-O Dockerfile instala FFmpeg/ffprobe e dependências Python, incluindo
-`django-storages[s3]`.
+O Dockerfile instala FFmpeg/ffprobe, LibreOffice Writer, fontes Liberation e DejaVu e
+dependências Python, incluindo `django-storages[s3]`, PyMuPDF e pdf2docx.
 
 ## Operação
 
@@ -149,5 +151,6 @@ docker compose logs -f backend worker
 docker compose run --rm backend python manage.py check
 ```
 
-No perfil VPS, acompanhe também `worker-provider`, `beat` e `caddy`. Não remova
+No perfil VPS, acompanhe também `worker-provider`, `worker-documents`,
+`beat` e `caddy`. Não remova
 volumes em produção e monitore espaço, RAM, fila e tempo de upload.

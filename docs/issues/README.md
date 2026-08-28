@@ -29,7 +29,7 @@ as APIs de captura e gravação do navegador.
 
 8. [Gerador de legendas SRT/VTT](011-gerador-de-legendas.md)
 9. [Cortar vídeo](012-cortar-video.md)
-10. [Conversão PDF ↔ DOCX](001-conversao-pdf-docx.md)
+10. [Conversão PDF ↔ DOCX](001-conversao-pdf-docx.md) — implementada
 
 As legendas reaproveitam o pipeline de transcrição. O corte usa FFmpeg nativo e a
 conversão de documentos exige LibreOffice e uma base genérica para seus jobs. Todas
