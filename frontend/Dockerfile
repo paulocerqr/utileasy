@@ -9,6 +9,10 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
+FROM dependencies AS development
+
+CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
+
 FROM dependencies AS checker
 
 COPY . .
