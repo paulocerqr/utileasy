@@ -14,3 +14,13 @@ build/
 .DS_Store
 db.sqlite3
 contexto.md
+
+graphify-out/.graphify_root
+graphify-out/.graphify_python
+graphify-out/.graphify_detect.json
+graphify-out/.graphify_analysis.json
+graphify-out/.graphify_ast.json
+graphify-out/.graphify_extract.json
+graphify-out/.graphify_semantic*.json
+graphify-out/.graphify_uncached.txt
+graphify-out/cache/

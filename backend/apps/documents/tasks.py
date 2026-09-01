@@ -7,12 +7,12 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from apps.transcriptions.models import AnonymousSession
-from apps.transcriptions.services import (
+from apps.common.storage import (
     delete_storage_file,
     materialize_storage_file,
     save_local_file,
 )
+from apps.transcriptions.models import AnonymousSession
 
 from .models import DocumentConversion
 from .services import DocumentConversionError, convert_document
