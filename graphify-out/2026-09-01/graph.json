@@ -255,19 +255,6 @@
       "source_location": "L29"
     },
     {
-      "id": "backend_apps_transcriptions_models_anonymoussession",
-      "label": "AnonymousSession",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "transcriptions/tasks.py",
-      "file_type": "code",
-      "norm_label": "anonymoussession",
-      "source_file": "backend/apps/transcriptions/models.py",
-      "source_location": "L62"
-    },
-    {
       "id": "backend_apps_transcriptions_models_audio",
       "label": "Audio",
       "_callable": true,
@@ -372,19 +359,6 @@
       "source_location": "L73"
     },
     {
-      "id": "backend_apps_transcriptions_models_transcriptioncapacity",
-      "label": "TranscriptionCapacity",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "transcriptions/tasks.py",
-      "file_type": "code",
-      "norm_label": "transcriptioncapacity",
-      "source_file": "backend/apps/transcriptions/models.py",
-      "source_location": "L240"
-    },
-    {
       "id": "backend_apps_transcriptions_providers_assemblyai_assemblyaiclient",
       "label": "AssemblyAIClient",
       "_callable": true,
@@ -487,6 +461,32 @@
       "norm_label": "ratelimiterror",
       "source_file": "backend/apps/transcriptions/anonymous.py",
       "source_location": "L23"
+    },
+    {
+      "id": "backend_apps_transcriptions_models_anonymoussession",
+      "label": "AnonymousSession",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "transcriptions/views.py",
+      "file_type": "code",
+      "norm_label": "anonymoussession",
+      "source_file": "backend/apps/transcriptions/models.py",
+      "source_location": "L62"
+    },
+    {
+      "id": "backend_apps_transcriptions_models_transcriptioncapacity",
+      "label": "TranscriptionCapacity",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "transcriptions/views.py",
+      "file_type": "code",
+      "norm_label": "transcriptioncapacity",
+      "source_file": "backend/apps/transcriptions/models.py",
+      "source_location": "L240"
     },
     {
       "id": "backend_apps_transcriptions_serializers_meta",
@@ -1892,18 +1892,6 @@
       "source_location": "L7"
     },
     {
-      "id": "backend_apps_transcriptions_models_anonymoussession_str",
-      "label": ".__str__()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "transcriptions/tasks.py",
-      "file_type": "code",
-      "norm_label": ".__str__()",
-      "source_file": "backend/apps/transcriptions/models.py",
-      "source_location": "L69"
-    },
-    {
       "id": "backend_apps_transcriptions_models_audio_str",
       "label": ".__str__()",
       "_callable": true,
@@ -2538,6 +2526,18 @@
       "norm_label": "validate_turnstile()",
       "source_file": "backend/apps/transcriptions/anonymous.py",
       "source_location": "L125"
+    },
+    {
+      "id": "backend_apps_transcriptions_models_anonymoussession_str",
+      "label": ".__str__()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "transcriptions/views.py",
+      "file_type": "code",
+      "norm_label": ".__str__()",
+      "source_file": "backend/apps/transcriptions/models.py",
+      "source_location": "L69"
     },
     {
       "id": "backend_apps_transcriptions_pdf_build_transcription_pdf",
@@ -4253,7 +4253,7 @@
       "file_type": "code",
       "norm_label": "loginpage()",
       "source_file": "frontend/app/login/page.tsx",
-      "source_location": "L10"
+      "source_location": "L9"
     },
     {
       "id": "frontend_components_login_form_loginform",
@@ -6020,42 +6020,6 @@
       "source_location": "L6"
     },
     {
-      "id": "frontend_app_criar_conta_page_registerpage",
-      "label": "RegisterPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "criar-conta/page.tsx",
-      "file_type": "code",
-      "norm_label": "registerpage()",
-      "source_file": "frontend/app/criar-conta/page.tsx",
-      "source_location": "L10"
-    },
-    {
-      "id": "frontend_components_register_form_registerform",
-      "label": "RegisterForm()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "criar-conta/page.tsx",
-      "file_type": "code",
-      "norm_label": "registerform()",
-      "source_file": "frontend/components/register-form.tsx",
-      "source_location": "L7"
-    },
-    {
-      "id": "frontend_components_register_form_registerform_handlesubmit",
-      "label": "handleSubmit()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "criar-conta/page.tsx",
-      "file_type": "code",
-      "norm_label": "handlesubmit()",
-      "source_file": "frontend/components/register-form.tsx",
-      "source_location": "L13"
-    },
-    {
       "id": "frontend_app_page_homepage",
       "label": "HomePage()",
       "_callable": true,
@@ -6413,17 +6377,6 @@
       "source_location": ""
     },
     {
-      "id": "backend_apps_transcriptions_models_rationale_241",
-      "label": "Singleton row used to serialize admission checks across API processes.",
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "transcriptions/tasks.py",
-      "file_type": "rationale",
-      "norm_label": "singleton row used to serialize admission checks across api processes.",
-      "source_file": "backend/apps/transcriptions/models.py",
-      "source_location": "L241"
-    },
-    {
       "id": "backend_apps_transcriptions_services_rationale_26",
       "label": "Yield a local path for either filesystem or remote Django storage.",
       "_origin": "ast",
@@ -6609,6 +6562,17 @@
       "norm_label": "anonymous access helpers shared by backend applications.",
       "source_file": "backend/apps/common/anonymous.py",
       "source_location": "L1"
+    },
+    {
+      "id": "backend_apps_transcriptions_models_rationale_241",
+      "label": "Singleton row used to serialize admission checks across API processes.",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "transcriptions/views.py",
+      "file_type": "rationale",
+      "norm_label": "singleton row used to serialize admission checks across api processes.",
+      "source_file": "backend/apps/transcriptions/models.py",
+      "source_location": "L241"
     },
     {
       "id": "webpack_mjs",
@@ -8700,7 +8664,7 @@
       "file_type": "code",
       "norm_label": "metadata",
       "source_file": "frontend/app/login/page.tsx",
-      "source_location": "L5"
+      "source_location": "L4"
     },
     {
       "id": "frontend_components_login_form",
@@ -10587,39 +10551,6 @@
       "norm_label": "note: this file should not be edited",
       "source_file": "frontend/next-env.d.ts",
       "source_location": "L5"
-    },
-    {
-      "id": "frontend_app_criar_conta_page",
-      "label": "criar-conta/page.tsx",
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "criar-conta/page.tsx",
-      "file_type": "code",
-      "norm_label": "criar-conta/page.tsx",
-      "source_file": "frontend/app/criar-conta/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "frontend_app_criar_conta_page_metadata",
-      "label": "metadata",
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "criar-conta/page.tsx",
-      "file_type": "code",
-      "norm_label": "metadata",
-      "source_file": "frontend/app/criar-conta/page.tsx",
-      "source_location": "L5"
-    },
-    {
-      "id": "frontend_components_register_form",
-      "label": "register-form.tsx",
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "criar-conta/page.tsx",
-      "file_type": "code",
-      "norm_label": "register-form.tsx",
-      "source_file": "frontend/components/register-form.tsx",
-      "source_location": "L1"
     },
     {
       "id": "frontend_app_page",
@@ -20208,18 +20139,6 @@
       "weight": 1.0
     },
     {
-      "source": "frontend_app_criar_conta_page",
-      "target": "frontend_components_register_form_registerform",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "frontend/app/criar-conta/page.tsx",
-      "source_location": "L3",
-      "weight": 1.0
-    },
-    {
       "source": "frontend_app_divisor_de_grupos_page",
       "target": "frontend_components_group_divider_workspace_groupdividerworkspace",
       "relation": "imports",
@@ -20276,7 +20195,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "frontend/app/login/page.tsx",
-      "source_location": "L3",
+      "source_location": "L2",
       "weight": 1.0
     },
     {
@@ -22740,18 +22659,6 @@
       "weight": 1.0
     },
     {
-      "source": "frontend_app_criar_conta_page",
-      "target": "frontend_components_register_form",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "frontend/app/criar-conta/page.tsx",
-      "source_location": "L3",
-      "weight": 1.0
-    },
-    {
       "source": "frontend_app_divisor_de_grupos_page",
       "target": "frontend_components_group_divider_workspace",
       "relation": "imports_from",
@@ -22808,7 +22715,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "frontend/app/login/page.tsx",
-      "source_location": "L3",
+      "source_location": "L2",
       "weight": 1.0
     },
     {
@@ -25369,28 +25276,6 @@
       "weight": 1.0
     },
     {
-      "source": "frontend_app_criar_conta_page",
-      "target": "frontend_app_criar_conta_page_registerpage",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "frontend/app/criar-conta/page.tsx",
-      "source_location": "L10",
-      "weight": 1.0
-    },
-    {
-      "source": "frontend_app_criar_conta_page",
-      "target": "frontend_app_criar_conta_page_metadata",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "frontend/app/criar-conta/page.tsx",
-      "source_location": "L5",
-      "weight": 1.0
-    },
-    {
       "source": "frontend_app_divisor_de_grupos_page",
       "target": "frontend_app_divisor_de_grupos_page_divisordegrupospage",
       "relation": "contains",
@@ -25502,24 +25387,24 @@
     },
     {
       "source": "frontend_app_login_page",
-      "target": "frontend_app_login_page_loginpage",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "frontend/app/login/page.tsx",
-      "source_location": "L10",
-      "weight": 1.0
-    },
-    {
-      "source": "frontend_app_login_page",
       "target": "frontend_app_login_page_metadata",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "frontend/app/login/page.tsx",
-      "source_location": "L5",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_login_page",
+      "target": "frontend_app_login_page_loginpage",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "frontend/app/login/page.tsx",
+      "source_location": "L9",
       "weight": 1.0
     },
     {
@@ -26576,28 +26461,6 @@
       "confidence_score": 1.0,
       "source_file": "frontend/components/random-draw-workspace.tsx",
       "source_location": "L64",
-      "weight": 1.0
-    },
-    {
-      "source": "frontend_components_register_form",
-      "target": "frontend_components_register_form_registerform",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "frontend/components/register-form.tsx",
-      "source_location": "L7",
-      "weight": 1.0
-    },
-    {
-      "source": "frontend_components_register_form_registerform",
-      "target": "frontend_components_register_form_registerform_handlesubmit",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "frontend/components/register-form.tsx",
-      "source_location": "L13",
       "weight": 1.0
     },
     {
@@ -34453,5 +34316,5 @@
       "source_file": "docs/frontend/10-autenticacao-e-proxy.md"
     }
   ],
-  "built_at_commit": "15a6727ac07f69b1beaf8310e56c457b929f8d50"
+  "built_at_commit": "c878efccbd2b60df419b344f8574c06f0f5f2fcb"
 }

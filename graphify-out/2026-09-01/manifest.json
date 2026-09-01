@@ -504,10 +504,10 @@
     "semantic_hash": "cb534dfb479bedaba0699d6d522169d8"
   },
   "frontend/app/login/page.tsx": {
-    "mtime": 1788272124.6166205,
-    "seen": 1788272142.6102834,
-    "ast_hash": "26556697cdef1373bd84f4122bbf057d",
-    "semantic_hash": ""
+    "mtime": 1786631506.8495145,
+    "seen": 1788181308.182363,
+    "ast_hash": "d18c237db1bd2269e3539641260761c1",
+    "semantic_hash": "d18c237db1bd2269e3539641260761c1"
   },
   "frontend/app/ordem-de-apresentacao/page.tsx": {
     "mtime": 1786631506.8495805,
@@ -1317,18 +1317,6 @@
     "mtime": 1788182388.5277297,
     "seen": 1788183202.4980614,
     "ast_hash": "c167744545599a63612218d374a7cac9",
-    "semantic_hash": ""
-  },
-  "frontend/app/criar-conta/page.tsx": {
-    "mtime": 1788272070.620222,
-    "seen": 1788272142.6102755,
-    "ast_hash": "02d5520725049e10f22eb4311bf4678f",
-    "semantic_hash": ""
-  },
-  "frontend/components/register-form.tsx": {
-    "mtime": 1788272070.6186616,
-    "seen": 1788272142.6103127,
-    "ast_hash": "85aa8ce13a09e7a65eecf98e33d2fede",
     "semantic_hash": ""
   }
 }

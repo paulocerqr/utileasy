@@ -1,16 +1,16 @@
-# Graph Report - utileazy  (2026-09-01)
+# Graph Report - utileazy  (2026-08-31)
 
 ## Corpus Check
-- 195 files · ~1,099,029 words
+- 193 files · ~1,098,397 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1131 nodes · 1745 edges · 105 communities (71 shown, 34 thin omitted)
+- 1125 nodes · 1739 edges · 104 communities (71 shown, 33 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 124 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `15a6727a`
+- Built from commit: `c878efcc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -90,7 +90,6 @@
 - Exclusividade de ator da transcrição
 - next.config.mjs
 - next-env.d.ts
-- criar-conta/page.tsx
 - White Geometric U2 Mark
 - Armored Knight Resting at a Mountain Overlook
 - Haloed Armored Woman Before a Gothic Castle
@@ -144,15 +143,15 @@
 - **Pipeline Assíncrono de Mídia** — docs_issues_011_gerador_de_legendas_gerador_legendas, docs_issues_012_cortar_video_corte_video, docs_requisitos_01_arquitetura_workers_separados, docs_requisitos_03_funcionalidades_regras_de_negocio_transcriptionjob [INFERRED 0.95]
 - **Proteção de jobs anônimos** — docs_backend_03_app_transcriptions_acesso_anonimo_por_uuid_e_segredo, docs_backend_04_api_backend_protecao_anonima_em_camadas, docs_backend_13_backend_escalavel_controles_de_visitantes, docs_backend_14_conversao_documentos_documentconversion, docs_frontend_10_autenticacao_e_proxy_credencial_anonima_em_sessionstorage [INFERRED 0.95]
 
-## Communities (105 total, 34 thin omitted)
+## Communities (104 total, 33 thin omitted)
 
 ### Community 0 - "transcriptions/tasks.py"
-Cohesion: 0.06
-Nodes (56): AnonymousSessionAdmin, AudioAdmin, DailyTranscriptionBudgetAdmin, register, TranscricaoAdmin, TranscriptionArtifactAdmin, Migration, AnonymousSession (+48 more)
+Cohesion: 0.07
+Nodes (53): AnonymousSessionAdmin, AudioAdmin, DailyTranscriptionBudgetAdmin, register, TranscricaoAdmin, TranscriptionArtifactAdmin, Migration, Audio (+45 more)
 
 ### Community 1 - "transcriptions/views.py"
 Cohesion: 0.09
-Nodes (31): Anonymous access helpers shared by backend applications., AnonymousAccessError, CaptchaError, consume_rate_limit(), create_anonymous_session(), enforce_anonymous_burst_limit(), enforce_anonymous_rate_limits(), generate_secret() (+23 more)
+Nodes (34): Anonymous access helpers shared by backend applications., AnonymousAccessError, CaptchaError, consume_rate_limit(), create_anonymous_session(), enforce_anonymous_burst_limit(), enforce_anonymous_rate_limits(), generate_secret() (+26 more)
 
 ### Community 2 - "group-divider.ts"
 Cohesion: 0.07
@@ -359,9 +358,9 @@ Cohesion: 0.67
 Nodes (3): Dotted Triangular Connections, Three Circular Nodes, Three-Node Triangle Logo
 
 ## Knowledge Gaps
-- **304 isolated node(s):** `Migration`, `Meta`, `Migration`, `Status`, `Operation` (+299 more)
+- **303 isolated node(s):** `Migration`, `Meta`, `Migration`, `Status`, `Operation` (+298 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **34 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **33 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -379,4 +378,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 3 inferred relationships involving `hash_secret()` (e.g. with `_authorized_job()` and `.post()`) actually correct?**
   _`hash_secret()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Migration`, `Meta`, `Migration` to the rest of the system?**
-  _304 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _303 weakly-connected nodes found - possible documentation gaps or missing edges._
