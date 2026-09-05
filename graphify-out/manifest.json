@@ -558,10 +558,10 @@
     "semantic_hash": "a1691b243ef8732e37a47e5eef18a7e4"
   },
   "frontend/components/app-shell.tsx": {
-    "mtime": 1788638245.132884,
-    "seen": 1788639663.9815664,
-    "ast_hash": "9f63150d8a32e15f12715ac616d8bf64",
-    "semantic_hash": "9f63150d8a32e15f12715ac616d8bf64"
+    "mtime": 1788643176.5955803,
+    "seen": 1788643181.6808743,
+    "ast_hash": "95b804506630b554493225fdfa56be3c",
+    "semantic_hash": ""
   },
   "frontend/components/backend-status.tsx": {
     "mtime": 1784796077.8486686,
@@ -606,10 +606,10 @@
     "semantic_hash": "e26a920a491ba515d72e1face7e8bd4c"
   },
   "frontend/components/navbar.tsx": {
-    "mtime": 1783907422.8996165,
-    "seen": 1788639663.9815762,
-    "ast_hash": "af68dc88d9f71ae7289cb31c6720958c",
-    "semantic_hash": "af68dc88d9f71ae7289cb31c6720958c"
+    "mtime": 1788643164.904668,
+    "seen": 1788643181.6808872,
+    "ast_hash": "c94c69cd5194d19f58b966f7b7363a4f",
+    "semantic_hash": ""
   },
   "frontend/components/pdf-docx-converter.tsx": {
     "mtime": 1788638245.1331027,
@@ -1335,6 +1335,36 @@
     "mtime": 1788638408.887525,
     "seen": 1788639663.981699,
     "ast_hash": "6137f1ec928350a16c8ac33cb55d3ab2",
+    "semantic_hash": ""
+  },
+  "frontend/components/brand-logo.tsx": {
+    "mtime": 1788643164.7326694,
+    "seen": 1788643181.6808777,
+    "ast_hash": "876764c22e2187621023c3b15128e34c",
+    "semantic_hash": ""
+  },
+  "frontend/public/logo/DESIGN.md": {
+    "mtime": 1788643044.5473363,
+    "seen": 1788643181.680996,
+    "ast_hash": "c9d68bcd40f9a309d540458616df11e4",
+    "semantic_hash": ""
+  },
+  "frontend/public/logo/code.html": {
+    "mtime": 1788643044.5475514,
+    "seen": 1788643181.6809971,
+    "ast_hash": "3700189823d2194f7d7127f2a6ebbbc9",
+    "semantic_hash": ""
+  },
+  "frontend/public/logo/screen.png": {
+    "mtime": 1788643044.5477092,
+    "seen": 1788643181.6810217,
+    "ast_hash": "da8987cf0d2a9b28b139e02ed0c1f923",
+    "semantic_hash": ""
+  },
+  "frontend/public/logo/utileazy-icon.svg": {
+    "mtime": 1788643164.5581326,
+    "seen": 1788643181.6810226,
+    "ast_hash": "2117cece9c232ef042bc4120088e7384",
     "semantic_hash": ""
   }
 }

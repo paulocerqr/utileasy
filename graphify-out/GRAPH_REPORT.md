@@ -1,16 +1,16 @@
 # Graph Report - utileazy  (2026-09-05)
 
 ## Corpus Check
-- 196 files · ~1,099,229 words
+- 198 files · ~1,101,813 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1136 nodes · 1759 edges · 108 communities (56 shown, 34 thin omitted)
+- 1153 nodes · 1778 edges · 103 communities (51 shown, 34 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 124 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1bbeab29`
+- Built from commit: `83c7cb0f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -28,16 +28,16 @@
 - pdf-merge-workspace.tsx
 - sorteador.ts
 - compilerOptions
-- Conversão de documentos PDF e DOCX
+- API do backend
 - qr-code-generator.tsx
 - UserSerializer
 - dependencies
 - Home Tunnel Deployment Plan
 - devDependencies
 - Pipeline de transcrição
-- layout.tsx
+- app-shell.tsx
 - components.json
-- Contexto do Frontend Atual
+- Planejamento das Features Prometidas na Home
 - ProfileSettings
 - AccountApiTests
 - Graphify Knowledge Graph Pipeline
@@ -53,7 +53,7 @@
 - utileazy-backup-maintenance
 - PostgreSQL como fonte definitiva
 - Arquitetura backend do Utileazy
-- Planejamento das Features Prometidas na Home
+- DESIGN.md
 - Auditoria para Publicação do Repositório
 - Moonlit Armored Knight Landscape
 - Blue Nocturnal Castle Landscape
@@ -72,9 +72,6 @@
 - test-postgres-restore
 - utileazy-security-audit
 - Proxy same-origin do Next.js
-- API do backend
-- Serviços Docker base
-- Gravação local com MediaRecorder
 - constellation-canvas.tsx
 - postcss.config.mjs
 - Black Angular Monogram Icon
@@ -91,9 +88,7 @@
 - next.config.mjs
 - next-env.d.ts
 - criar-conta/page.tsx
-- Base do backend: Django e Docker
 - Q: Analise esse projeto usando o Graphify
-- Imagens para PDF no navegador
 - White Geometric U2 Mark
 - Armored Knight Resting at a Mountain Overlook
 - Haloed Armored Woman Before a Gothic Castle
@@ -147,15 +142,15 @@
 - **Pipeline Assíncrono de Mídia** — docs_issues_011_gerador_de_legendas_gerador_legendas, docs_issues_012_cortar_video_corte_video, docs_requisitos_01_arquitetura_workers_separados, docs_requisitos_03_funcionalidades_regras_de_negocio_transcriptionjob [INFERRED 0.95]
 - **Proteção de jobs anônimos** — docs_backend_03_app_transcriptions_acesso_anonimo_por_uuid_e_segredo, docs_backend_04_api_backend_protecao_anonima_em_camadas, docs_backend_13_backend_escalavel_controles_de_visitantes, docs_backend_14_conversao_documentos_documentconversion, docs_frontend_10_autenticacao_e_proxy_credencial_anonima_em_sessionstorage [INFERRED 0.95]
 
-## Communities (108 total, 34 thin omitted)
+## Communities (103 total, 34 thin omitted)
 
 ### Community 0 - "transcriptions/tasks.py"
-Cohesion: 0.07
-Nodes (53): AnonymousSessionAdmin, AudioAdmin, DailyTranscriptionBudgetAdmin, register, TranscricaoAdmin, TranscriptionArtifactAdmin, Migration, Audio (+45 more)
+Cohesion: 0.06
+Nodes (55): AnonymousSessionAdmin, AudioAdmin, DailyTranscriptionBudgetAdmin, register, TranscricaoAdmin, TranscriptionArtifactAdmin, Migration, Audio (+47 more)
 
 ### Community 1 - "transcriptions/views.py"
 Cohesion: 0.09
-Nodes (34): Anonymous access helpers shared by backend applications., AnonymousAccessError, CaptchaError, consume_rate_limit(), create_anonymous_session(), enforce_anonymous_burst_limit(), enforce_anonymous_rate_limits(), generate_secret() (+26 more)
+Nodes (32): Anonymous access helpers shared by backend applications., AnonymousAccessError, CaptchaError, consume_rate_limit(), create_anonymous_session(), enforce_anonymous_burst_limit(), enforce_anonymous_rate_limits(), generate_secret() (+24 more)
 
 ### Community 2 - "group-divider.ts"
 Cohesion: 0.07
@@ -201,9 +196,9 @@ Nodes (22): metadata, DrawMode, RandomDrawWorkspace(), changeMode(), clearFeedba
 Cohesion: 0.07
 Nodes (28): compilerOptions, allowImportingTsExtensions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib (+20 more)
 
-### Community 13 - "Conversão de documentos PDF e DOCX"
-Cohesion: 0.22
-Nodes (9): API de conversão de documentos, Conversão de documentos PDF e DOCX, Conversores em subprocessos isolados, DocumentConversion, Fila documents dedicada, Storage e ciclo de vida de documentos, Implementar conversão real de PDF e DOCX, Fidelidade de layout quando possível (+1 more)
+### Community 13 - "API do backend"
+Cohesion: 0.07
+Nodes (28): Backend privado acessado via Next.js, Base do backend: Django e Docker, Filas Celery media, provider e maintenance, Monólito Django modular, API de conversão de documentos, API do backend, Autenticação por sessão e CSRF, Proteção anônima em camadas (+20 more)
 
 ### Community 14 - "qr-code-generator.tsx"
 Cohesion: 0.15
@@ -229,17 +224,17 @@ Nodes (34): devDependencies, jsqr, postcss, tailwindcss, @tailwindcss/postcss, @
 Cohesion: 0.12
 Nodes (18): Acesso anônimo por UUID e segredo, App de transcrições, Conclusão por polling ou webhook, Deduplicação por áudio e configuração, Pipeline de transcrição, Storage materializável em caminho temporário, Deploy, Overrides Compose por ambiente (+10 more)
 
-### Community 20 - "layout.tsx"
+### Community 20 - "app-shell.tsx"
 Cohesion: 0.15
-Nodes (10): geistMono, metadata, viewport, AppShell(), domains, isToolActive(), applyTheme(), getDocumentTheme() (+2 more)
+Nodes (11): geistMono, metadata, viewport, AppShell(), domains, isToolActive(), BrandLogo(), applyTheme() (+3 more)
 
 ### Community 21 - "components.json"
 Cohesion: 0.11
 Nodes (17): aliases, components, hooks, lib, ui, utils, iconLibrary, rsc (+9 more)
 
-### Community 22 - "Contexto do Frontend Atual"
-Cohesion: 0.15
-Nodes (13): AppShell global, Contexto do Frontend Atual, Divisão local de grupos, Geração local de QR Code, Mesclagem local de PDFs, Ordem de apresentação local, Stack Next.js, React, TypeScript e Tailwind, Mesclagem no navegador com pdf-lib (+5 more)
+### Community 22 - "Planejamento das Features Prometidas na Home"
+Cohesion: 0.07
+Nodes (32): AppShell global, Contexto do Frontend Atual, Divisão local de grupos, Geração local de QR Code, Imagens para PDF no navegador, Mesclagem local de PDFs, Ordem de apresentação local, Stack Next.js, React, TypeScript e Tailwind (+24 more)
 
 ### Community 23 - "ProfileSettings"
 Cohesion: 0.18
@@ -293,9 +288,9 @@ Nodes (4): Arquivos temporários fora do banco, Banco de dados atual, Capacidade
 Cohesion: 0.50
 Nodes (4): Arquitetura backend do Utileazy, Contexto atual do backend, Fluxo assíncrono de jobs, Isolamento de propriedade dos jobs
 
-### Community 38 - "Planejamento das Features Prometidas na Home"
-Cohesion: 0.17
-Nodes (13): Decisão go ou no-go, Avaliar download autorizado do YouTube, Downloader restrito com yt-dlp, Aleatoriedade criptográfica local, Implementar sorteador de números e itens, Fisher-Yates com fonte criptográfica, Implementar ordem de apresentação, Corpos de teste fora de Django e Next (+5 more)
+### Community 38 - "DESIGN.md"
+Cohesion: 0.13
+Nodes (14): Brand & Style, Buttons, Cards, Chips & Tags, Colors, Components, Dark Mode (Default), Elevation & Depth (+6 more)
 
 ### Community 39 - "Auditoria para Publicação do Repositório"
 Cohesion: 0.50
@@ -337,18 +332,6 @@ Nodes (4): Crescent Moon, Dark Moonlit Gothic Castle Landscape, Gothic Castle, M
 Cohesion: 0.67
 Nodes (3): Conversão documental assíncrona no frontend, Interface de transcrição, Proxy same-origin do Next.js
 
-### Community 57 - "API do backend"
-Cohesion: 0.29
-Nodes (7): API do backend, Autenticação por sessão e CSRF, Proteção anônima em camadas, Webhook AssemblyAI idempotente, Autenticação, uso anônimo e proxy do frontend, Proxy frontend para Django, Sessão Django na interface
-
-### Community 58 - "Serviços Docker base"
-Cohesion: 0.29
-Nodes (7): Cadeia do túnel caseiro, Serviços Docker base, Workers separados na VPS, Capacidade dos ambientes, Capacidade inicial da VPS, Medir antes de aumentar concorrência, Perfil caseiro limitado
-
-### Community 59 - "Gravação local com MediaRecorder"
-Cohesion: 0.67
-Nodes (3): Detecção real da disponibilidade de áudio, Implementar gravador de tela com áudio, Gravação local com MediaRecorder
-
 ### Community 62 - "Black Angular Monogram Icon"
 Cohesion: 0.67
 Nodes (3): Black Angular Monogram Icon, Light Circular Background, Stylized Lettermark
@@ -361,21 +344,13 @@ Nodes (3): Acme Inc. Placeholder Logo, Acme Inc. Wordmark, Angular Geometric Emb
 Cohesion: 0.67
 Nodes (3): Dotted Triangular Connections, Three Circular Nodes, Three-Node Triangle Logo
 
-### Community 79 - "Base do backend: Django e Docker"
-Cohesion: 0.40
-Nodes (5): Backend privado acessado via Next.js, Base do backend: Django e Docker, Filas Celery media, provider e maintenance, Monólito Django modular, Contexto Docker atual
-
 ### Community 80 - "Q: Analise esse projeto usando o Graphify"
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Analise esse projeto usando o Graphify, Source Nodes
 
-### Community 81 - "Imagens para PDF no navegador"
-Cohesion: 0.67
-Nodes (3): Imagens para PDF no navegador, Implementar conversão de imagens para PDF, Geração local com Canvas e pdf-lib
-
 ## Knowledge Gaps
-- **298 isolated node(s):** `Migration`, `Meta`, `Migration`, `Status`, `Operation` (+293 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 513 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **310 isolated node(s):** `Migration`, `Meta`, `Migration`, `Status`, `Operation` (+305 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 525 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **34 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
@@ -394,4 +369,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 3 inferred relationships involving `hash_secret()` (e.g. with `_authorized_job()` and `.post()`) actually correct?**
   _`hash_secret()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Migration`, `Meta`, `Migration` to the rest of the system?**
-  _298 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _310 weakly-connected nodes found - possible documentation gaps or missing edges._

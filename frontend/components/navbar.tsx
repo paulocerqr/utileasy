@@ -1,5 +1,5 @@
-import { LayoutList } from "lucide-react"
 import Link from "next/link"
+import { BrandLogo } from "./brand-logo"
 import { ThemeToggle } from "./theme-toggle"
 
 export function Navbar() {
@@ -12,10 +12,7 @@ export function Navbar() {
           aria-label="Voltar para a página inicial do Utileazy"
           className="flex items-center gap-2 rounded-lg outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-brand"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-secondary">
-            <LayoutList className="h-4 w-4 text-brand" />
-          </div>
-          <span className="font-semibold text-foreground">Utileazy</span>
+          <BrandLogo />
         </Link>
 
         {/* Nav Links */}

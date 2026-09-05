@@ -11,7 +11,6 @@ import {
   FileArchive,
   FolderOpen,
   Gauge,
-  LayoutGrid,
   Menu,
   LogOut,
   PanelLeftOpen,
@@ -20,6 +19,7 @@ import {
 } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
+import { BrandLogo } from "@/components/brand-logo"
 
 const domains = [
   {
@@ -118,10 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background text-foreground">
       <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center border-b border-border bg-background/90 px-4 backdrop-blur-xl md:px-6">
         <Link href="/" className="flex items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-light">
-          <span className="flex size-8 items-center justify-center rounded-md border border-border bg-secondary">
-            <LayoutGrid className="size-4 text-brand-light" aria-hidden="true" />
-          </span>
-          <span className="text-xl font-bold tracking-tight">Utileazy</span>
+          <BrandLogo />
         </Link>
 
         <nav aria-label="Navegação principal" className="mx-auto hidden items-center gap-8 text-sm md:flex">
