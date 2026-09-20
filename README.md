@@ -141,6 +141,28 @@ criados no Redis apenas quando o endpoint anônimo é usado. CAPTCHA inválido c
 somente o limite curto por IP; os contadores de 24 horas são incrementados após uma
 validação bem-sucedida.
 
+## Integração com UtileasyDoc
+
+O Caddy deste perfil também atende `doc.utileasy.com.br` e encaminha as
+requisições ao frontend do UtileasyDoc pela rede externa `utileasydoc_edge`.
+O mesmo `cloudflared` continua atendendo os dois hostnames. Configure no
+painel da Cloudflare o hostname `doc.utileasy.com.br` neste túnel com origem
+`http://caddy:8080`.
+
+Crie a rede uma única vez antes de atualizar este stack:
+
+```bash
+docker network create utileasydoc_edge
+./deploy/compose-home-tunnel.sh up -d --build
+```
+
+Depois, suba o UtileasyDoc com seu `compose.home-tunnel.yaml`. A rota do
+subdomínio responderá com erro de upstream enquanto o frontend do UtileasyDoc
+não estiver saudável. O Caddy permanece sem porta pública e somente ele se
+conecta à rede compartilhada; banco e backend de cada projeto ficam isolados.
+
+Não execute `down -v` para atualizar: isso apagaria volumes persistentes.
+
 ## Atualização
 
 Depois de enviar ou baixar uma nova versão do código no servidor:

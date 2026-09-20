@@ -53,3 +53,37 @@ http://{$PUBLIC_DOMAIN}:8080 {
 		}
 	}
 }
+
+http://doc.utileasy.com.br:8080 {
+	encode zstd gzip
+	header -Server
+
+	log {
+		output stdout
+		format filter {
+			request>headers>Authorization delete
+			request>headers>Cookie delete
+			request>headers>Proxy-Authorization delete
+			wrap json
+		}
+	}
+
+	reverse_proxy utileasydoc-frontend:80 {
+		# O Caddy calcula o IP a partir do proxy confiável; nunca repassa
+		# o cabeçalho fornecido diretamente pelo visitante.
+		header_up X-Utileasy-Client-IP {client_ip}
+		header_up X-Real-IP {client_ip}
+		header_up X-Forwarded-For {client_ip}
+		header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
+		header_up -CF-Connecting-IP
+		header_up -CF-Connecting-IPv6
+		header_up -Forwarded
+		header_up -True-Client-IP
+
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 90s
+			keepalive 30s
+		}
+	}
+}

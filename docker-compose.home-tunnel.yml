@@ -91,6 +91,7 @@ services:
     networks:
       - default
       - tunnel_edge
+      - utileasydoc_edge
     depends_on:
       frontend:
         condition: service_healthy
@@ -162,6 +163,9 @@ services:
 networks:
   tunnel_edge:
     driver: bridge
+  utileasydoc_edge:
+    external: true
+    name: utileasydoc_edge
 
 secrets:
   cloudflare_tunnel_token:
