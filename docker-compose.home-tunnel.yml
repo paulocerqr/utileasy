@@ -91,6 +91,8 @@ services:
     networks:
       - default
       - tunnel_edge
+      - reverse_proxy
+      - utileasydoc_edge
     depends_on:
       frontend:
         condition: service_healthy
@@ -162,7 +164,12 @@ services:
 networks:
   tunnel_edge:
     driver: bridge
-
+  reverse_proxy:
+    external: true
+    name: reverse_proxy
+  utileasydoc_edge:
+    external: true
+    name: utileasydoc_edge
 secrets:
   cloudflare_tunnel_token:
     file: ${CLOUDFLARE_TUNNEL_TOKEN_FILE:-./secrets/cloudflare-tunnel-token}
