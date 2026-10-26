@@ -1,0 +1,82 @@
+x-oracle-worker: &oracle-worker
+  build:
+    context: ./backend
+  restart: unless-stopped
+  env_file: [.env]
+  environment:
+    POSTGRES_HOST: db
+    POSTGRES_PORT: 5432
+    CELERY_BROKER_URL: redis://redis:6379/0
+    MEDIA_ROOT: /app/media
+  volumes:
+    - transcription_media:/app/media
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    backend:
+      condition: service_healthy
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  db:
+    mem_limit: 2g
+    cpus: 1.0
+  redis:
+    mem_limit: 256m
+    cpus: 0.25
+  backend:
+    mem_limit: 1g
+    cpus: 1.0
+  worker:
+    container_name: utilitydev-worker-media
+    mem_limit: 2560m
+    cpus: 2.0
+    stop_grace_period: 15m
+    command: >-
+      celery -A config worker --loglevel=INFO --pool=prefork
+      --concurrency=${VPS_MEDIA_CONCURRENCY:-2}
+      -Q media --hostname=media@%h
+  worker-provider:
+    <<: *oracle-worker
+    container_name: utilitydev-worker-provider
+    mem_limit: 1g
+    cpus: 1.0
+    stop_grace_period: 15m
+    command: >-
+      celery -A config worker --loglevel=INFO --pool=prefork
+      --concurrency=${VPS_PROVIDER_CONCURRENCY:-2}
+      -Q provider,maintenance --hostname=provider@%h
+  worker-documents:
+    <<: *oracle-worker
+    container_name: utilitydev-worker-documents
+    mem_limit: 2g
+    cpus: 1.0
+    stop_grace_period: 15m
+    command: >-
+      celery -A config worker --loglevel=INFO --pool=prefork
+      --concurrency=${VPS_DOCUMENT_CONCURRENCY:-1}
+      -Q documents --hostname=documents@%h
+  beat:
+    mem_limit: 256m
+    cpus: 0.25
+  frontend:
+    mem_limit: 1g
+    cpus: 0.75
+  caddy:
+    volumes: !override
+      - ./deploy/Caddyfile.oracle:/etc/caddy/Caddyfile:ro
+    networks: !override [default, tunnel_edge, reverse_proxy]
+
+networks: !override
+  default: {}
+  tunnel_edge:
+    driver: bridge
+  reverse_proxy:
+    external: true
+    name: reverse_proxy
