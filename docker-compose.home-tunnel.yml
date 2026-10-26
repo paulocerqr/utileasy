@@ -46,6 +46,10 @@ services:
     ports: !reset []
     expose:
       - "3000"
+    networks:
+      default:
+        aliases:
+          - utileazy-frontend
     environment:
       TRUSTED_REVERSE_PROXY: "1"
     logging: *bounded-logging

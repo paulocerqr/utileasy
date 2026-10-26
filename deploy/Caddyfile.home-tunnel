@@ -35,7 +35,7 @@ http://{$PUBLIC_DOMAIN}:8080 {
 		}
 	}
 
-	reverse_proxy frontend:3000 {
+	reverse_proxy utileazy-frontend:3000 {
 		# Nunca encaminhe a cadeia fornecida pelo visitante. O valor calculado por
 		# Caddy vem exclusivamente de CF-Connecting-IP no proxy confiável.
 		header_up X-Real-IP {client_ip}
@@ -55,6 +55,8 @@ http://{$PUBLIC_DOMAIN}:8080 {
 }
 
 http://n8n.utileasy.com.br:8080 {
+	# OAuth query parameters contain short-lived secrets.
+	log_skip /webhook/radar/tiktokshop/*
 	encode zstd gzip
 	header -Server
 
