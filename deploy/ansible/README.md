@@ -63,37 +63,113 @@ Autenticação Tailscale é interativa: no servidor, execute `sudo tailscale up`
 
 O checkout `/home/virgilio/utileasy` deve existir e estar no commit aprovado. O Ansible não faz pull, reset ou upload da árvore inteira: atualizar código é uma ação separada do operador.
 
-Pode reutilizar `.env` e token já existentes na Oracle, ou fornecer os arquivos no PC:
+### 4.1. Entender o caminho dos arquivos
 
-```text
-deploy/ansible/secrets/
-  env
-  cloudflare-tunnel-token
-```
+O Ansible não busca credenciais no caseiro. Você copia do **CASEIRO para o PC**, e `configure.yml` copia do **PC para a ORACLE**. Se `.env` e token já estiverem na Oracle, pode reutilizá-los sem criar cópias locais. As configurações de backup também podem ser instaladas manualmente no destino.
 
-Esse diretório é ignorado pelo Git. Crie-o com modo `700` e mantenha arquivos em `600`. Não copie segredos para os exemplos versionados. Quando os arquivos locais existem, são a fonte para a próxima execução e sobrescrevem os correspondentes no destino; mantenha-os atualizados. Arquivos criptografados por Ansible Vault também podem ser usados pelo módulo `copy`, acrescentando `--ask-vault-pass`.
+| Origem no caseiro | Nome em `deploy/ansible/secrets/` no PC | Destino na Oracle |
+| --- | --- | --- |
+| `/home/virgilio/UtilityDev/.env` | `env` | `/home/virgilio/utileasy/.env` |
+| `/home/virgilio/UtilityDev/secrets/cloudflare-tunnel-token` | `cloudflare-tunnel-token` | `/home/virgilio/utileasy/secrets/cloudflare-tunnel-token` |
+| `/etc/utileazy-backup.conf` | `utileazy-backup.conf` | `/etc/utileazy-backup.conf` |
+| `/etc/utileazy-restic-password` | `utileazy-restic-password` | `/etc/utileazy-restic-password` |
+| `/etc/default/utileazy-alerts` | `utileazy-alerts` | `/etc/default/utileazy-alerts` |
+
+Os dois primeiros arquivos são necessários à aplicação; os três últimos configuram backup/alertas e são copiados somente com `install_backup_config=true`. A chave privada SSH `.key` permanece no PC e não entra nesse diretório nem é enviada à Oracle.
+
+### 4.2. Copiar ambiente e token para o PC
+
+**No PC**, em um terminal dentro de `deploy/ansible` do checkout local:
 
 ```bash
+umask 077
+mkdir -p secrets
+chmod 700 secrets
+scp virgilio@100.65.207.104:/home/virgilio/UtilityDev/.env secrets/env
+scp virgilio@100.65.207.104:/home/virgilio/UtilityDev/secrets/cloudflare-tunnel-token secrets/cloudflare-tunnel-token
+chmod 600 secrets/env secrets/cloudflare-tunnel-token
+```
+
+O arquivo `.env` recebe o nome **`env`, sem ponto**, somente na pasta local. O playbook volta a usar `.env` no destino. Se seu SSH para o caseiro exigir outra identidade, acrescente `-i /caminho/da/chave-privada-do-caseiro` aos comandos `scp`; a chave Oracle não necessariamente dá acesso ao caseiro.
+
+Esperado: os dois comandos SCP terminam sem erro. Não use `cat` para conferir credenciais; confira existência/permissões com `ls -l secrets/`.
+
+### 4.3. Exportar e copiar configurações de backup
+
+Os arquivos em `/etc` são protegidos e o SCP comum de virgilio não consegue lê-los diretamente. Primeiro faça uma cópia temporária privada com sudo.
+
+**No CASEIRO**, conecte-se por `ssh virgilio@100.65.207.104` e execute:
+
+```bash
+umask 077
+install -d -m 700 /home/virgilio/utileasy-migracao-segredos
+sudo install -o virgilio -g virgilio -m 600 /etc/utileazy-backup.conf /home/virgilio/utileasy-migracao-segredos/utileazy-backup.conf
+sudo install -o virgilio -g virgilio -m 600 /etc/utileazy-restic-password /home/virgilio/utileasy-migracao-segredos/utileazy-restic-password
+sudo install -o virgilio -g virgilio -m 600 /etc/default/utileazy-alerts /home/virgilio/utileasy-migracao-segredos/utileazy-alerts
+```
+
+Digite a senha sudo interativamente. Esses comandos copiam os arquivos sem alterar os originais e sem mostrar conteúdo. Se algum comando falhar, corrija a causa antes de prosseguir; não crie arquivos vazios para substituir os ausentes.
+
+**De volta ao PC**, no mesmo diretório `deploy/ansible` da etapa anterior:
+
+```bash
+scp virgilio@100.65.207.104:/home/virgilio/utileasy-migracao-segredos/utileazy-backup.conf secrets/utileazy-backup.conf
+scp virgilio@100.65.207.104:/home/virgilio/utileasy-migracao-segredos/utileazy-restic-password secrets/utileazy-restic-password
+scp virgilio@100.65.207.104:/home/virgilio/utileasy-migracao-segredos/utileazy-alerts secrets/utileazy-alerts
+chmod 600 secrets/utileazy-backup.conf secrets/utileazy-restic-password secrets/utileazy-alerts
+```
+
+Confirme que os cinco arquivos são não vazios, sem imprimir seus valores:
+
+```bash
+for name in env cloudflare-tunnel-token utileazy-backup.conf utileazy-restic-password utileazy-alerts; do
+  if test -s "secrets/$name"; then
+    printf 'OK: %s\n' "$name"
+  else
+    printf 'AUSENTE OU VAZIO: %s\n' "$name"
+  fi
+done
+```
+
+Esperado: cinco linhas `OK`. Se você optou por não copiar configurações de backup agora, confira apenas os dois arquivos da aplicação e não use `install_backup_config=true`.
+
+### 4.4. Aplicar na Oracle pelo Ansible
+
+**No PC**, dentro de `deploy/ansible`, com o ambiente Python da etapa 1 ativo, execute uma das opções:
+
+```bash
+# Aplicacao e units; reutiliza configuracoes de backup ja presentes no destino.
 ansible-playbook configure.yml -K
 ```
 
-Instala o override e Caddyfile Oracle sem docs, ajusta PUID/PGID aos IDs reais e protege `.env`/token. Preserva os demais valores do `.env`; revise que domínio, polling, cookies seguros, Turnstile e segredos estão corretos. Cria `reverse_proxy`, instala scripts/units existentes e configura três workers/quatro filas no monitor. Não inicia aplicação nem habilita timers novos; também não desabilita timers que você já ativou anteriormente.
-
-Para copiar configurações de backup antigas, coloque também em `secrets/`:
-
-```text
-utileazy-backup.conf
-utileazy-restic-password
-utileazy-alerts
-```
-
-Depois:
+Ou, para copiar também os três arquivos de backup/alertas:
 
 ```bash
 ansible-playbook configure.yml -K -e install_backup_config=true
 ```
 
-Reutiliza a senha e o repositório existentes e corrige caminhos de `UtilityDev` para `utileasy`. Não inicializa Restic nem gera senha nova. Revise também caminhos opcionais em `BACKUP_HOST_PATHS`. Tarefas que manipulam segredos usam `no_log` e não exibem diff; não use depuração que imprima seu conteúdo.
+Se usa `inventory.local.yml`, acrescente `-i inventory.local.yml`. A senha solicitada por `-K` é a de sudo na **Oracle**, não a do caseiro nem a senha Restic.
+
+O playbook instala o override e Caddyfile Oracle sem docs, ajusta PUID/PGID aos IDs reais e protege `.env`/token. Preserva os demais valores do `.env`; revise que domínio, polling, cookies seguros, Turnstile e segredos estão corretos. Cria `reverse_proxy`, instala scripts/units existentes e configura três workers/quatro filas no monitor. Não inicia aplicação nem habilita timers novos; também não desabilita timers que você já ativou anteriormente.
+
+Com `install_backup_config=true`, reutiliza a senha e o repositório Restic existentes e corrige caminhos de `UtilityDev` para `utileasy`. Não inicializa Restic nem gera senha nova. Revise também caminhos opcionais em `BACKUP_HOST_PATHS`.
+
+**Na ORACLE**, confira somente metadados:
+
+```bash
+stat -c '%a %U:%G %n' /home/virgilio/utileasy/.env /home/virgilio/utileasy/secrets/cloudflare-tunnel-token
+sudo stat -c '%a %U:%G %n' /etc/utileazy-backup.conf /etc/utileazy-restic-password /etc/default/utileazy-alerts
+```
+
+Esperado: modo `600` em todos; dono `virgilio:virgilio` nos dois arquivos da aplicação e `root:root` nos três arquivos de host. A segunda consulta só se aplica se essas configurações foram instaladas.
+
+### 4.5. Proteger as cópias
+
+`secrets/` é ignorado pelo Git, mas isso não criptografa os arquivos. Quando os arquivos locais existem, são a fonte para a próxima execução e sobrescrevem os correspondentes no destino; mantenha-os atualizados. Arquivos criptografados por Ansible Vault também podem ser usados pelo módulo `copy`, acrescentando `--ask-vault-pass`.
+
+Após validar a instalação e garantir uma cópia de recuperação segura, remova as cópias temporárias de `/home/virgilio/utileasy-migracao-segredos` no caseiro. No PC, mantenha os segredos protegidos ou criptografe-os; não apague sua única cópia da senha Restic. Não remova os originais de `/etc` ou do checkout caseiro durante essa limpeza.
+
+Tarefas que manipulam segredos usam `no_log` e não exibem diff; não use depuração que imprima seu conteúdo. Os comandos desta seção não copiam banco de dados, volume n8n ou credenciais/arquivos do Radar: esses dados seguem a migração própria de cada serviço.
 
 ## 5. Validar ARM64 sem iniciar produção
 
