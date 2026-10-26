@@ -1,0 +1,15 @@
+app_user: virgilio
+app_dir: /home/virgilio/utileasy
+public_domain: utileasy.com.br
+compose_files:
+  - docker-compose.yml
+  - docker-compose.home-tunnel.yml
+  - docker-compose.oracle.yml
+compose_argv:
+  - "{{ app_dir }}/deploy/compose-oracle.sh"
+controller_secrets_dir: "{{ playbook_dir }}/secrets"
+ssh_public_key_file: ""
+docker_restart_permitted: false
+restic_version: 0.18.1
+install_backup_config: false
+minimum_disk_free_gib: 10

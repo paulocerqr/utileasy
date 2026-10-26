@@ -1,0 +1,8 @@
+all:
+  children:
+    oracle:
+      hosts:
+        oracle_main:
+          ansible_host: 163.176.159.44
+          ansible_user: virgilio
+          ansible_ssh_private_key_file: /home/paulocerqueira/.ssh/ssh-keyServerMain.key

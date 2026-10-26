@@ -1,0 +1,14 @@
+---
+- name: Iniciar somente bancos para restauracao manual
+  hosts: oracle
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Subir PostgreSQL e Redis sem workers ou tunnel
+      ansible.builtin.command:
+        argv: "{{ compose_argv + ['up', '-d', '--no-deps', '--wait', 'db', 'redis'] }}"
+      changed_when: true
+
+    - name: Mostrar proximo passo sem iniciar aplicacao
+      ansible.builtin.debug:
+        msg: "Restaure manualmente o dump de ensaio conforme GUIA_MIGRACAO_VPS.md. Workers, beat e cloudflared nao foram iniciados por este playbook."

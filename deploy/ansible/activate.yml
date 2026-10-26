@@ -1,0 +1,33 @@
+---
+- name: Ativar Utileasy depois do corte manual
+  hosts: oracle
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Exigir confirmacao do estado final antes de aceitar trafego
+      ansible.builtin.assert:
+        that:
+          - migration_ready | default(false) | bool
+        fail_msg: >-
+          Conclua drenagem, restore final, conferencias, separacao de docs e parada
+          do conector antigo antes de executar com -e migration_ready=true.
+
+    - name: Iniciar backend e aguardar migrations e healthcheck
+      ansible.builtin.command:
+        argv: "{{ compose_argv + ['up', '-d', '--no-deps', '--no-build', '--pull', 'never', '--wait', 'backend'] }}"
+      changed_when: true
+
+    - name: Iniciar interface depois de backend saudavel
+      ansible.builtin.command:
+        argv: "{{ compose_argv + ['up', '-d', '--no-deps', '--no-build', '--pull', 'never', '--wait', 'frontend', 'caddy'] }}"
+      changed_when: true
+
+    - name: Iniciar consumidores somente depois das migrations
+      ansible.builtin.command:
+        argv: "{{ compose_argv + ['up', '-d', '--no-deps', '--no-build', '--pull', 'never', '--wait', 'worker', 'worker-provider', 'worker-documents', 'beat'] }}"
+      changed_when: true
+
+    - name: Conectar o tunnel somente depois da aplicacao saudavel
+      ansible.builtin.command:
+        argv: "{{ compose_argv + ['up', '-d', '--no-deps', '--no-build', '--pull', 'never', '--wait', 'cloudflared'] }}"
+      changed_when: true

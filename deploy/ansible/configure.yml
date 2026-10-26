@@ -1,0 +1,202 @@
+---
+- name: Configurar checkout Oracle sem iniciar aplicacao
+  hosts: oracle
+  become: true
+  tasks:
+    - name: Exigir checkout existente e aprovado pelo operador
+      ansible.builtin.stat:
+        path: "{{ app_dir }}/{{ item }}"
+      loop:
+        - backend/Dockerfile
+        - frontend/Dockerfile
+        - docker-compose.yml
+        - docker-compose.home-tunnel.yml
+      register: checkout_files
+
+    - name: Confirmar arquivos base
+      ansible.builtin.assert:
+        that:
+          - checkout_files.results | rejectattr('stat.exists') | list | length == 0
+          - public_domain is match('^[a-zA-Z0-9][a-zA-Z0-9.-]+$')
+        fail_msg: "Prepare o checkout e revise public_domain antes de configurar."
+
+    - name: Consultar UID real do usuario
+      ansible.builtin.command:
+        argv: [id, -u, "{{ app_user }}"]
+      register: deploy_uid
+      changed_when: false
+      check_mode: false
+
+    - name: Consultar GID real do usuario
+      ansible.builtin.command:
+        argv: [id, -g, "{{ app_user }}"]
+      register: deploy_gid
+      changed_when: false
+      check_mode: false
+
+    - name: Criar diretorio privado dos segredos remotos
+      ansible.builtin.file:
+        path: "{{ app_dir }}/secrets"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0700'
+
+    - name: Conferir segredos opcionais na estacao controladora
+      ansible.builtin.stat:
+        path: "{{ controller_secrets_dir }}/{{ item }}"
+      loop: [env, cloudflare-tunnel-token]
+      delegate_to: localhost
+      become: false
+      register: local_secrets
+      no_log: true
+
+    - name: Copiar segredos fornecidos sem exibir conteudo ou diff
+      ansible.builtin.copy:
+        src: "{{ controller_secrets_dir }}/{{ item.item }}"
+        dest: "{{ app_dir }}/{{ '.env' if item.item == 'env' else 'secrets/cloudflare-tunnel-token' }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0600'
+      loop: "{{ local_secrets.results }}"
+      when: item.stat.exists
+      no_log: true
+      diff: false
+
+    - name: Conferir segredos remotos antes de prosseguir
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ app_dir }}/.env"
+        - "{{ app_dir }}/secrets/cloudflare-tunnel-token"
+      register: remote_secrets
+      no_log: true
+
+    - name: Exigir segredos nao vazios
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isreg | default(false)
+          - item.stat.size | default(0) > 0
+        fail_msg: "Forneca .env e token no destino ou em deploy/ansible/secrets."
+      loop: "{{ remote_secrets.results }}"
+      no_log: true
+
+    - name: Corrigir dono e permissoes dos segredos
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0600'
+      loop:
+        - "{{ app_dir }}/.env"
+        - "{{ app_dir }}/secrets/cloudflare-tunnel-token"
+
+    - name: Ajustar somente identidade e arquivo do token no ambiente existente
+      ansible.builtin.lineinfile:
+        path: "{{ app_dir }}/.env"
+        regexp: "^{{ item.key }}="
+        line: "{{ item.key }}={{ item.value }}"
+      loop:
+        - {key: PUID, value: "{{ deploy_uid.stdout }}"}
+        - {key: PGID, value: "{{ deploy_gid.stdout }}"}
+        - {key: CLOUDFLARE_TUNNEL_TOKEN_FILE, value: ./secrets/cloudflare-tunnel-token}
+      no_log: true
+      diff: false
+
+    - name: Instalar perfil Oracle sem docs
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../{{ item.src }}"
+        dest: "{{ app_dir }}/{{ item.src }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - {src: docker-compose.oracle.yml, mode: '0644'}
+        - {src: deploy/Caddyfile.oracle, mode: '0644'}
+        - {src: deploy/compose-oracle.sh, mode: '0755'}
+
+    - name: Validar merge sem imprimir variaveis expandidas
+      ansible.builtin.command:
+        argv: "{{ compose_argv + ['config', '--quiet'] }}"
+      changed_when: false
+      no_log: true
+
+    - name: Preparar rede compartilhada com n8n
+      ansible.builtin.command:
+        argv: [docker, network, inspect, reverse_proxy]
+      register: proxy_network
+      failed_when: proxy_network.rc not in [0, 1]
+      changed_when: false
+
+    - name: Criar rede quando ausente
+      ansible.builtin.command:
+        argv: [docker, network, create, reverse_proxy]
+      when: proxy_network.rc == 1
+      changed_when: true
+
+    - name: Instalar scripts operacionais existentes
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../{{ item.dir }}/{{ item.name }}"
+        dest: "/usr/local/sbin/{{ item.name }}"
+        owner: root
+        group: root
+        mode: '0750'
+      loop:
+        - {dir: phase8, name: utileazy-backup}
+        - {dir: phase8, name: utileazy-backup-restore-test}
+        - {dir: phase8, name: utileazy-backup-maintenance}
+        - {dir: phase8, name: utileazy-send-alert}
+        - {dir: phase6, name: utileazy-soak-snapshot}
+
+    - name: Instalar units sem habilitar ou iniciar timers
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../{{ item.dir }}/{{ item.name }}"
+        dest: "/etc/systemd/system/{{ item.name }}"
+        mode: '0644'
+      loop:
+        - {dir: phase8, name: utileazy-backup.service}
+        - {dir: phase8, name: utileazy-backup.timer}
+        - {dir: phase8, name: utileazy-backup-restore-test.service}
+        - {dir: phase8, name: utileazy-backup-restore-test.timer}
+        - {dir: phase8, name: utileazy-backup-maintenance.service}
+        - {dir: phase8, name: utileazy-backup-maintenance.timer}
+        - {dir: phase8, name: 'utileazy-alert@.service'}
+        - {dir: phase6, name: utileazy-soak-check.service}
+        - {dir: phase6, name: utileazy-soak-check.timer}
+
+    - name: Criar diretorios privados de estado
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0700'
+      loop:
+        - /var/cache/utileazy-restic
+        - /var/lib/utileazy-backup
+        - /var/lib/utileazy-alerts
+
+    - name: Criar diretorio do override do monitor
+      ansible.builtin.file:
+        path: /etc/systemd/system/utileazy-soak-check.service.d
+        state: directory
+        mode: '0755'
+
+    - name: Instalar override existente do monitor
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../phase8/utileazy-soak-check.override.conf"
+        dest: /etc/systemd/system/utileazy-soak-check.service.d/phase8.conf
+        mode: '0644'
+
+    - name: Configurar monitor para tres workers e quatro filas
+      ansible.builtin.template:
+        src: soak-monitor.j2
+        dest: /etc/default/utileazy-soak-monitor
+        mode: '0644'
+
+    - name: Instalar configuracoes de backup fornecidas pelo operador
+      ansible.builtin.import_tasks: tasks/backup-config.yml
+      when: install_backup_config | bool
+
+    - name: Recarregar definicoes systemd sem iniciar servicos
+      ansible.builtin.systemd_service:
+        daemon_reload: true

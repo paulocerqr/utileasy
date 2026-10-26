@@ -1,0 +1,226 @@
+---
+- name: Preparar Ubuntu ARM64 da Oracle
+  hosts: oracle
+  become: true
+  tasks:
+    - name: Exigir a plataforma inspecionada
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version is version('24.04', '>=')
+          - ansible_facts.architecture == 'aarch64'
+
+    - name: Instalar ferramentas do host
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - git
+          - jq
+          - rsync
+          - file
+          - bzip2
+          - python3-venv
+          - python3-apt
+          - unattended-upgrades
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Garantir usuario de deploy sem mudar seu UID existente
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        shell: /bin/bash
+        groups: sudo
+        append: true
+        create_home: true
+
+    - name: Criar diretorio SSH do usuario
+      ansible.builtin.file:
+        path: "/home/{{ app_user }}/.ssh"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0700'
+
+    - name: Recusar chave privada ou arquivo invalido
+      ansible.builtin.assert:
+        that:
+          - lookup('ansible.builtin.file', ssh_public_key_file) is match('^(ssh-(rsa|ed25519)|ecdsa-sha2-[^ ]+|sk-[^ ]+) [A-Za-z0-9+/=]+( |$)')
+          - "'PRIVATE KEY' not in lookup('ansible.builtin.file', ssh_public_key_file)"
+        fail_msg: "Forneca somente a chave publica .pub, nunca o arquivo privado .key."
+      when: ssh_public_key_file | length > 0
+      no_log: true
+
+    - name: Adicionar chave publica opcional sem remover as existentes
+      ansible.builtin.lineinfile:
+        path: "/home/{{ app_user }}/.ssh/authorized_keys"
+        line: "{{ lookup('ansible.builtin.file', ssh_public_key_file) }}"
+        create: true
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0600'
+      when: ssh_public_key_file | length > 0
+      no_log: true
+      diff: false
+
+    - name: Criar diretorio do repositorio Tailscale
+      ansible.builtin.file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Instalar chave oficial Tailscale
+      ansible.builtin.get_url:
+        url: "https://pkgs.tailscale.com/stable/ubuntu/{{ ansible_facts.distribution_release }}.noarmor.gpg"
+        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+        mode: '0644'
+
+    - name: Configurar repositorio Tailscale
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu {{ ansible_facts.distribution_release }} main"
+        filename: tailscale
+        state: present
+
+    - name: Instalar Tailscale sem autenticar ou mudar SSH
+      ansible.builtin.apt:
+        name: tailscale
+        state: present
+
+    - name: Habilitar daemon da rede privada
+      ansible.builtin.systemd_service:
+        name: tailscaled
+        state: started
+        enabled: true
+
+    - name: Criar diretorios de configuracao
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /etc/apt/keyrings
+        - /etc/docker
+        - /etc/systemd/journald.conf.d
+
+    - name: Obter chave do repositorio oficial Docker
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Configurar repositorio Docker ARM64
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=arm64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_facts.distribution_release }} stable"
+        filename: docker
+        state: present
+
+    - name: Instalar Docker e plugins oficiais
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Adicionar usuario ao grupo Docker
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        groups: docker
+        append: true
+
+    - name: Habilitar Docker
+      ansible.builtin.systemd_service:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Inspecionar configuracao Docker existente
+      ansible.builtin.stat:
+        path: /etc/docker/daemon.json
+      register: docker_config_stat
+
+    - name: Ler configuracao Docker sem substituir outras opcoes
+      ansible.builtin.slurp:
+        src: /etc/docker/daemon.json
+      register: docker_config_read
+      when: docker_config_stat.stat.exists
+
+    - name: Mesclar rotacao de logs
+      ansible.builtin.set_fact:
+        docker_config_old: "{{ (docker_config_read.content | b64decode | from_json) if docker_config_stat.stat.exists else {} }}"
+
+    - name: Calcular configuracao desejada
+      ansible.builtin.set_fact:
+        docker_config_new: "{{ docker_config_old | combine({'log-driver': 'json-file', 'log-opts': {'max-size': '10m', 'max-file': '3'}}, recursive=true) }}"
+
+    - name: Consultar containers em execucao antes de reiniciar Docker
+      ansible.builtin.command: docker ps --quiet
+      register: docker_running
+      changed_when: false
+      check_mode: false
+
+    - name: Evitar reinicio inesperado com workloads ativos
+      ansible.builtin.assert:
+        that:
+          - docker_config_old == docker_config_new or docker_running.stdout | trim == '' or docker_restart_permitted | bool
+        fail_msg: "A rotacao exige reiniciar Docker com containers ativos. Agende a interrupcao e use -e docker_restart_permitted=true."
+
+    - name: Gravar configuracao validada do Docker
+      ansible.builtin.copy:
+        content: "{{ docker_config_new | to_nice_json }}\n"
+        dest: /etc/docker/daemon.json
+        mode: '0644'
+        validate: dockerd --validate --config-file=%s
+      notify: Reiniciar Docker
+
+    - name: Limitar armazenamento do journal
+      ansible.builtin.copy:
+        content: "[Journal]\nSystemMaxUse=200M\n"
+        dest: /etc/systemd/journald.conf.d/utileasy.conf
+        mode: '0644'
+      notify: Reiniciar journal
+
+    - name: Criar diretorio privado para download do Restic
+      ansible.builtin.file:
+        path: /var/cache/utileasy-install
+        state: directory
+        mode: '0700'
+
+    - name: Baixar Restic ARM64 com checksum da release oficial
+      ansible.builtin.get_url:
+        url: "https://github.com/restic/restic/releases/download/v{{ restic_version }}/restic_{{ restic_version }}_linux_arm64.bz2"
+        dest: "/var/cache/utileasy-install/restic_{{ restic_version }}_linux_arm64.bz2"
+        checksum: "sha256:https://github.com/restic/restic/releases/download/v{{ restic_version }}/SHA256SUMS"
+        mode: '0600'
+
+    - name: Descomprimir binario da versao escolhida
+      ansible.builtin.command:
+        argv: [bzip2, -dk, "/var/cache/utileasy-install/restic_{{ restic_version }}_linux_arm64.bz2"]
+        creates: "/var/cache/utileasy-install/restic_{{ restic_version }}_linux_arm64"
+
+    - name: Instalar Restic sem substituir o pacote do sistema
+      ansible.builtin.copy:
+        src: "/var/cache/utileasy-install/restic_{{ restic_version }}_linux_arm64"
+        remote_src: true
+        dest: /usr/local/bin/restic
+        mode: '0755'
+
+    - name: Confirmar suporte ao comando usado pelos backups
+      ansible.builtin.command: /usr/local/bin/restic backup --help
+      register: restic_help
+      changed_when: false
+      failed_when: restic_help.rc != 0 or '--stdin-from-command' not in restic_help.stdout
+
+  handlers:
+    - name: Reiniciar Docker
+      ansible.builtin.systemd_service:
+        name: docker
+        state: restarted
+
+    - name: Reiniciar journal
+      ansible.builtin.systemd_service:
+        name: systemd-journald
+        state: restarted

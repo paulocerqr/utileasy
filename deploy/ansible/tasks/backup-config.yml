@@ -1,0 +1,25 @@
+---
+- name: Copiar configuracoes protegidas do host antigo
+  ansible.builtin.copy:
+    src: "{{ controller_secrets_dir }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0600'
+  loop:
+    - {src: utileazy-backup.conf, dest: /etc/utileazy-backup.conf}
+    - {src: utileazy-restic-password, dest: /etc/utileazy-restic-password}
+    - {src: utileazy-alerts, dest: /etc/default/utileazy-alerts}
+  no_log: true
+  diff: false
+
+- name: Corrigir caminhos do backup sem alterar credenciais
+  ansible.builtin.lineinfile:
+    path: /etc/utileazy-backup.conf
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value | quote }}"
+  loop:
+    - {key: UTILITYDEV_DIR, value: "{{ app_dir }}"}
+    - {key: CLOUDFLARE_TUNNEL_TOKEN_FILE, value: "{{ app_dir }}/secrets/cloudflare-tunnel-token"}
+  no_log: true
+  diff: false

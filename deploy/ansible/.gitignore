@@ -1,0 +1,3 @@
+secrets/
+*.vault-password
+inventory.local.yml
